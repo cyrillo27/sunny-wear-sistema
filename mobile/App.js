@@ -3,10 +3,9 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'reac
 import * as Location from 'expo-location';
 import { io } from 'socket.io-client';
 
-// ALTERE AQUI PARA O IP DA SUA MÁQUINA NA REDE WI-FI (Ex: 'http://192.168.0.10:3001')
-const IP_DO_COMPUTADOR = 'http://192.168.X.X:3001';
-
-const socket = io(IP_DO_COMPUTADOR);
+// CONECTADO AO BACKEND NO RENDER
+const API_URL = 'https://sunny-wear-sistema.onrender.com';
+const socket = io(API_URL);
 
 export default function App() {
   const [placa, setPlaca] = useState('ABC-1234');
@@ -45,7 +44,7 @@ export default function App() {
         setLocalizacaoAtual({ latitude, longitude });
         setVelocidadeAtual(velocidadeKmH);
 
-        // Envia via WebSocket para o backend do computador
+        // Envia via WebSocket para o backend no Render
         socket.emit('atualizar_localizacao', {
           placa: placa.toUpperCase(),
           latitude,

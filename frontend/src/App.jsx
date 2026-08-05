@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Bell, Wrench } from 'lucide-react';
+import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Bell, Wrench, LogOut, Lock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -13,12 +13,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// ALTERADO: Apontando para o backend hospedado no Render
 const API_URL = 'https://sunny-wear-sistema.onrender.com';
 const socket = io(API_URL);
 const COLORS = ['#0284c7', '#059669', '#7c3aed', '#dc2626', '#d97706', '#475569'];
 
 export default function App() {
+  // Estado para controlar se o admin está logado
+  const [isLogged, setIsLogged] = useState(() => {
+    return localStorage.getItem('isAdminLoggedIn') === 'true';
+  });
+
+  // Estados da Tela de Login
+  const [usuarioLogin, setUsuarioLogin] = useState('');
+  const [senhaLogin, setSenhaLogin] = useState('');
+
   const [aba, setAba] = useState('dashboard');
 
   const [nome, setNome] = useState('');
@@ -46,7 +54,6 @@ export default function App() {
   const [dataItinerario, setDataItinerario] = useState('');
   const [historicoItinerario, setHistoricoItinerario] = useState([]);
 
-  // Estados para Manutenção / Custos
   const [placaManutencao, setPlacaManutencao] = useState('');
   const [tipoManutencao, setTipoManutencao] = useState('Combustível');
   const [descricaoManutencao, setDescricaoManutencao] = useState('');
@@ -54,7 +61,6 @@ export default function App() {
   const [dataManutencao, setDataManutencao] = useState(new Date().toISOString().split('T')[0]);
   const [manutencoesList, setManutencoesList] = useState([]);
 
-  // Estados para Filtro, Dashboard Stats e Gráficos
   const [filtroDataRelatorio, setFiltroDataRelatorio] = useState('');
   const [filtroMotoristaRelatorio, setFiltroMotoristaRelatorio] = useState('');
   const [stats, setStats] = useState({ total_motoristas: 0, total_veiculos: 0, total_jornadas: 0, total_alertas: 0, custo_total: 0 });
@@ -66,6 +72,7 @@ export default function App() {
   const [posicoesAoVivo, setPosicoesAoVivo] = useState({});
 
   useEffect(() => {
+    if (!isLogged) return;
     carregarDados();
     carregarStats();
     carregarAlertas();
@@ -89,13 +96,30 @@ export default function App() {
       socket.off('posicao_motorista');
       socket.off('novo_alerta');
     };
-  }, []);
+  }, [isLogged]);
 
   useEffect(() => {
+    if (!isLogged) return;
     carregarStats();
     carregarGraficos();
     carregarManutencoes();
-  }, [aba]);
+  }, [aba, isLogged]);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    // Defina aqui o seu usuário e senha de administrador desejados:
+    if (usuarioLogin === 'sunnyadm' && senhaLogin === 'sunny@137') {
+      localStorage.setItem('isAdminLoggedIn', 'true');
+      setIsLogged(true);
+    } else {
+      alert('Usuário ou senha incorretos!');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdminLoggedIn');
+    setIsLogged(false);
+  };
 
   const carregarDados = async () => {
     try {
@@ -312,19 +336,67 @@ export default function App() {
     boxShadow: aba === nomeAba ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none'
   });
 
+  // Se NÃO estiver logado, exibe a tela de login protegida
+  if (!isLogged) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', color: '#fff', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <form onSubmit={handleLogin} style={{ background: '#1e293b', padding: '40px', borderRadius: '12px', width: '320px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid #334155' }}>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <div style={{ background: '#0284c7', width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto', fontSize: '24px' }}>☀️</div>
+            <h2 style={{ fontSize: '20px', fontWeight: '700', margin: '0 0 4px 0', color: '#f8fafc' }}>Sunny Wear</h2>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Acesso Restrito ao Administrador</p>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '12px', fontWeight: '600', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>Usuário</label>
+            <input 
+              type="text" 
+              value={usuarioLogin} 
+              onChange={e => setUsuarioLogin(e.target.value)} 
+              placeholder="Ex: admin" 
+              required 
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #475569', background: '#0f172a', color: '#fff', boxSizing: 'border-box' }} 
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ fontSize: '12px', fontWeight: '600', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>Senha</label>
+            <input 
+              type="password" 
+              value={senhaLogin} 
+              onChange={e => setSenhaLogin(e.target.value)} 
+              placeholder="••••••••" 
+              required 
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #475569', background: '#0f172a', color: '#fff', boxSizing: 'border-box' }} 
+            />
+          </div>
+
+          <button type="submit" style={{ width: '100%', background: '#0284c7', color: '#fff', padding: '12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '15px' }}>
+            Entrar no Sistema
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '24px', background: '#f1f5f9', minHeight: '100vh', color: '#1e293b' }}>
       
       {/* HEADER */}
       <header style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '24px 32px', borderRadius: '12px', marginBottom: '28px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
-          <div style={{ background: '#0284c7', padding: '10px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '24px' }}>☀️</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ background: '#0284c7', padding: '10px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: '24px' }}>☀️</span>
+            </div>
+            <div>
+              <h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0, letterSpacing: '-0.5px' }}>Sunny Wear</h1>
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Sistema de Gestão de Frotas e Logística</p>
+            </div>
           </div>
-          <div>
-            <h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0, letterSpacing: '-0.5px' }}>Sunny Wear</h1>
-            <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Sistema de Gestão de Frotas e Logística</p>
-          </div>
+          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#ef4444', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>
+            <LogOut size={16} /> Sair
+          </button>
         </div>
 
         {/* NAVEGAÇÃO DE ABAS */}

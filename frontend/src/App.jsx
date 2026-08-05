@@ -13,7 +13,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const socket = io('http://localhost:3001');
+// ALTERADO: Apontando para o backend hospedado no Render
+const API_URL = 'https://sunny-wear-sistema.onrender.com';
+const socket = io(API_URL);
 const COLORS = ['#0284c7', '#059669', '#7c3aed', '#dc2626', '#d97706', '#475569'];
 
 export default function App() {
@@ -97,17 +99,17 @@ export default function App() {
 
   const carregarDados = async () => {
     try {
-      const resMot = await fetch('http://localhost:3001/api/motoristas');
+      const resMot = await fetch(`${API_URL}/api/motoristas`);
       setMotoristasList(await resMot.json());
       
-      const resVei = await fetch('http://localhost:3001/api/veiculos');
+      const resVei = await fetch(`${API_URL}/api/veiculos`);
       const veiData = await resVei.json();
       setVeiculosList(veiData);
       if (veiData.length > 0 && !placaManutencao) {
         setPlacaManutencao(veiData[0].placa);
       }
 
-      const resJor = await fetch('http://localhost:3001/api/jornadas');
+      const resJor = await fetch(`${API_URL}/api/jornadas`);
       setJornadasList(await resJor.json());
     } catch (e) {
       console.error("Erro ao carregar dados", e);
@@ -116,7 +118,7 @@ export default function App() {
 
   const carregarStats = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/dashboard/stats');
+      const res = await fetch(`${API_URL}/api/dashboard/stats`);
       const data = await res.json();
       setStats(data);
     } catch (e) {
@@ -126,7 +128,7 @@ export default function App() {
 
   const carregarAlertas = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/alertas');
+      const res = await fetch(`${API_URL}/api/alertas`);
       setAlertasList(await res.json());
     } catch (e) {
       console.error("Erro ao carregar alertas", e);
@@ -135,7 +137,7 @@ export default function App() {
 
   const carregarManutencoes = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/manutencoes');
+      const res = await fetch(`${API_URL}/api/manutencoes`);
       setManutencoesList(await res.json());
     } catch (e) {
       console.error("Erro ao carregar manutenções", e);
@@ -144,10 +146,10 @@ export default function App() {
 
   const carregarGraficos = async () => {
     try {
-      const resAlertas = await fetch('http://localhost:3001/api/dashboard/grafico-alertas');
+      const resAlertas = await fetch(`${API_URL}/api/dashboard/grafico-alertas`);
       setDadosGraficoAlertas(await resAlertas.json());
 
-      const resTurnos = await fetch('http://localhost:3001/api/dashboard/grafico-turnos');
+      const resTurnos = await fetch(`${API_URL}/api/dashboard/grafico-turnos`);
       setDadosGraficoTurnos(await resTurnos.json());
     } catch (e) {
       console.error("Erro ao carregar gráficos", e);
@@ -156,7 +158,7 @@ export default function App() {
 
   const cadastrarMotorista = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:3001/api/motoristas', {
+    const res = await fetch(`${API_URL}/api/motoristas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, cnh, telefone })
@@ -171,7 +173,7 @@ export default function App() {
 
   const deletarMotorista = async (id) => {
     if (!confirm("Deseja realmente apagar este motorista?")) return;
-    await fetch(`http://localhost:3001/api/motoristas/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/api/motoristas/${id}`, { method: 'DELETE' });
     carregarDados();
     carregarStats();
     carregarGraficos();
@@ -179,7 +181,7 @@ export default function App() {
 
   const cadastrarVeiculo = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:3001/api/veiculos', {
+    const res = await fetch(`${API_URL}/api/veiculos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ placa, modelo, marca, ano })
@@ -194,7 +196,7 @@ export default function App() {
 
   const deletarVeiculo = async (id) => {
     if (!confirm("Deseja realmente apagar este veículo?")) return;
-    await fetch(`http://localhost:3001/api/veiculos/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/api/veiculos/${id}`, { method: 'DELETE' });
     carregarDados();
     carregarStats();
     carregarGraficos();
@@ -209,7 +211,7 @@ export default function App() {
       return;
     }
 
-    const res = await fetch('http://localhost:3001/api/manutencoes', {
+    const res = await fetch(`${API_URL}/api/manutencoes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -231,14 +233,14 @@ export default function App() {
 
   const deletarManutencao = async (id) => {
     if (!confirm("Deseja realmente apagar este registro de custo?")) return;
-    await fetch(`http://localhost:3001/api/manutencoes/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/api/manutencoes/${id}`, { method: 'DELETE' });
     carregarManutencoes();
     carregarStats();
   };
 
   const criarJornada = async (e) => {
     e.preventDefault();
-    const res = await fetch('http://localhost:3001/api/jornadas', {
+    const res = await fetch(`${API_URL}/api/jornadas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -256,7 +258,7 @@ export default function App() {
 
   const consultarMulta = async (e) => {
     e.preventDefault();
-    const res = await fetch(`http://localhost:3001/api/multas/consultar?placa=${buscaPlaca}&data=${buscaData}`);
+    const res = await fetch(`${API_URL}/api/multas/consultar?placa=${buscaPlaca}&data=${buscaData}`);
     const data = await res.json();
     setResultadoMulta(data);
   };
@@ -264,7 +266,7 @@ export default function App() {
   const buscarItinerario = async (e) => {
     e.preventDefault();
     if (!placaItinerario) return;
-    let url = `http://localhost:3001/api/itinerario/${placaItinerario}`;
+    let url = `${API_URL}/api/itinerario/${placaItinerario}`;
     if (dataItinerario) {
       url += `?data=${dataItinerario}`;
     }
@@ -809,7 +811,7 @@ export default function App() {
             </div>
 
             <div style={{ textAlign: 'center' }}>
-              <a href={`http://localhost:3001/api/relatorios/completo.csv?data=${filtroDataRelatorio}&motorista_id=${filtroMotoristaRelatorio}`} download style={{ background: '#16a34a', color: '#fff', padding: '14px 28px', borderRadius: '8px', fontWeight: '600', fontSize: '15px', textDecoration: 'none', display: 'inline-block' }}>
+              <a href={`${API_URL}/api/relatorios/completo.csv?data=${filtroDataRelatorio}&motorista_id=${filtroMotoristaRelatorio}`} download style={{ background: '#16a34a', color: '#fff', padding: '14px 28px', borderRadius: '8px', fontWeight: '600', fontSize: '15px', textDecoration: 'none', display: 'inline-block' }}>
                 ⬇️ Baixar Planilha Filtrada (CSV)
               </a>
             </div>

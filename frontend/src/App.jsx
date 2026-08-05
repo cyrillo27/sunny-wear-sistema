@@ -100,7 +100,7 @@ export default function App() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (usuarioLogin === 'admin' && senhaLogin === 'admin123') {
+    if (usuarioLogin === 'adminsunny' && senhaLogin === 'sunny@137') {
       localStorage.setItem('isAdminLoggedIn', 'true');
       setIsLogged(true);
     } else {

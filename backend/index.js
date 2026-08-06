@@ -1,13 +1,10 @@
 const express = require('express');
-const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
 const http = require('http');
 const { Server } = require('socket.io');
+const cors = require('cors');
+const { Pool } = require('pg');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -16,376 +13,363 @@ const io = new Server(server, {
   }
 });
 
-// Conecta ou cria o banco de dados SQLite
-const db = new sqlite3.Database('./sunny_wear.db', (err) => {
-  if (err) {
-    console.error('Erro ao abrir o banco de dados', err.message);
-  } else {
-    console.log('📦 Conectado ao banco de dados SQLite.');
+app.use(cors());
+app.use(express.json());
+
+// Conexão com o Banco de Dados PostgreSQL (Render)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'sua_string_de_conexao_aqui',
+  ssl: { rejectUnauthorized: false }
+});
+
+// Criar Tabelas caso não existam
+async function criarTabelas() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS motoristas (
+        id SERIAL PRIMARY KEY,
+        nome VARCHAR(100) NOT NULL,
+        cnh VARCHAR(50) NOT NULL,
+        telefone VARCHAR(30)
+      );
+
+      CREATE TABLE IF NOT EXISTS veiculos (
+        id SERIAL PRIMARY KEY,
+        placa VARCHAR(20) UNIQUE NOT NULL,
+        modelo VARCHAR(50) NOT NULL,
+        marca VARCHAR(50) NOT NULL,
+        ano INT
+      );
+
+      CREATE TABLE IF NOT EXISTS jornadas (
+        id SERIAL PRIMARY KEY,
+        motorista_id INT REFERENCES motoristas(id) ON DELETE CASCADE,
+        veiculo_id INT REFERENCES veiculos(id) ON DELETE CASCADE,
+        data_inicio TIMESTAMP NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS posicoes (
+        id SERIAL PRIMARY KEY,
+        placa VARCHAR(20) NOT NULL,
+        latitude DECIMAL(10, 8) NOT NULL,
+        longitude DECIMAL(11, 8) NOT NULL,
+        velocidade INT NOT NULL,
+        rua VARCHAR(255),
+        bairro VARCHAR(100),
+        cidade VARCHAR(100),
+        horario TIMESTAMP NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS alertas (
+        id SERIAL PRIMARY KEY,
+        placa VARCHAR(20) NOT NULL,
+        mensagem TEXT NOT NULL,
+        horario TIMESTAMP NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS manutencoes (
+        id SERIAL PRIMARY KEY,
+        placa VARCHAR(20) NOT NULL,
+        tipo VARCHAR(50) NOT NULL,
+        descricao TEXT NOT NULL,
+        custo DECIMAL(10,2) NOT NULL,
+        data DATE NOT NULL
+      );
+    `);
+    console.log("Tabelas verificadas/criadas com sucesso no banco de dados.");
+  } catch (err) {
+    console.error("Erro ao criar tabelas:", err);
   }
+}
+criarTabelas();
+
+// ==================== ROTAS DE MOTORISTAS ====================
+app.get('/api/motoristas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM motoristas ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// Criação das tabelas
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS motoristas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT,
-    cnh TEXT,
-    telefone TEXT
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS veiculos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    placa TEXT,
-    modelo TEXT,
-    marca TEXT,
-    ano INTEGER
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS jornadas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    motorista_id INTEGER,
-    veiculo_id INTEGER,
-    data_inicio TEXT
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS itinerarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    placa TEXT,
-    horario TEXT,
-    rua TEXT,
-    bairro TEXT,
-    cidade TEXT
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS alertas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    placa TEXT,
-    velocidade REAL,
-    limite INTEGER,
-    horario TEXT,
-    mensagem TEXT
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS manutencoes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    placa TEXT,
-    tipo TEXT,
-    descricao TEXT,
-    custo REAL,
-    data TEXT
-  )`, (err) => {
-    if (err) console.error("Erro ao criar tabela manutencoes:", err.message);
-    else console.log("✅ Tabela 'manutencoes' verificada/criada com sucesso.");
-  });
-});
-
-// Rota para Estatísticas do Dashboard (Incluindo Custo Total)
-app.get('/api/dashboard/stats', (req, res) => {
-  const stats = {};
-
-  db.get(`SELECT COUNT(*) as total FROM motoristas`, [], (err, row) => {
-    stats.total_motoristas = row ? row.total : 0;
-
-    db.get(`SELECT COUNT(*) as total FROM veiculos`, [], (err, row) => {
-      stats.total_veiculos = row ? row.total : 0;
-
-      db.get(`SELECT COUNT(*) as total FROM jornadas`, [], (err, row) => {
-        stats.total_jornadas = row ? row.total : 0;
-
-        db.get(`SELECT COUNT(*) as total FROM alertas`, [], (err, row) => {
-          stats.total_alertas = row ? row.total : 0;
-
-          db.get(`SELECT SUM(custo) as custo_total FROM manutencoes`, [], (err, row) => {
-            stats.custo_total = row && row.custo_total ? row.custo_total : 0;
-            res.json(stats);
-          });
-        });
-      });
-    });
-  });
-});
-
-// Rota para Dados do Gráfico de Alertas por Veículo
-app.get('/api/dashboard/grafico-alertas', (req, res) => {
-  const query = `
-    SELECT placa, COUNT(*) as total 
-    FROM alertas 
-    GROUP BY placa
-  `;
-  db.all(query, [], (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
-});
-
-// Rota para Dados do Gráfico de Turnos por Motorista
-app.get('/api/dashboard/grafico-turnos', (req, res) => {
-  const query = `
-    SELECT m.nome as motorista, COUNT(j.id) as total 
-    FROM motoristas m
-    LEFT JOIN jornadas j ON m.id = j.motorista_id
-    GROUP BY m.id
-  `;
-  db.all(query, [], (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
-});
-
-// Rota para Listar Alertas
-app.get('/api/alertas', (req, res) => {
-  db.all(`SELECT * FROM alertas ORDER BY horario DESC LIMIT 50`, [], (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
-});
-
-// Rotas de Manutenção / Custos
-app.post('/api/manutencoes', (req, res) => {
-  const { placa, tipo, descricao, custo, data } = req.body;
-  
-  if (!placa || custo === undefined) {
-    return res.status(400).json({ erro: 'Placa e Custo são obrigatórios!' });
-  }
-
-  const query = `INSERT INTO manutencoes (placa, tipo, descricao, custo, data) VALUES (?, ?, ?, ?, ?)`;
-  
-  db.run(query, [placa, tipo, descricao, parseFloat(custo), data], function(err) {
-    if (err) {
-      console.error("Erro ao inserir manutenção:", err.message);
-      return res.status(400).json({ erro: err.message });
-    }
-    console.log(`✅ Custo salvo com ID: ${this.lastID} para a placa ${placa}`);
-    res.json({ mensagem: 'Registro de custo/manutenção salvo com sucesso!', id: this.lastID });
-  });
-});
-
-app.get('/api/manutencoes', (req, res) => {
-  db.all(`SELECT * FROM manutencoes ORDER BY id DESC`, [], (err, rows) => {
-    if (err) {
-      console.error("Erro ao buscar manutenções:", err.message);
-      return res.status(500).json({ erro: err.message });
-    }
-    res.json(rows);
-  });
-});
-
-app.delete('/api/manutencoes/:id', (req, res) => {
-  const { id } = req.params;
-  db.run(`DELETE FROM manutencoes WHERE id = ?`, id, function(err) {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json({ mensagem: 'Registro apagado com sucesso!' });
-  });
-});
-
-// Rota para Cadastrar Motorista
-app.post('/api/motoristas', (req, res) => {
+app.post('/api/motoristas', async (req, res) => {
   const { nome, cnh, telefone } = req.body;
-  const query = `INSERT INTO motoristas (nome, cnh, telefone) VALUES (?, ?, ?)`;
-  
-  db.run(query, [nome, cnh, telefone], function(err) {
-    if (err) return res.status(400).json({ erro: err.message });
-    res.json({ mensagem: 'Motorista cadastrado com sucesso!', id: this.lastID });
-  });
+  try {
+    const result = await pool.query(
+      'INSERT INTO motoristas (nome, cnh, telefone) VALUES ($1, $2, $3) RETURNING *',
+      [nome, cnh, telefone]
+    );
+    res.json({ mensagem: 'Motorista cadastrado com sucesso!', motorista: result.rows[0] });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-app.get('/api/motoristas', (req, res) => {
-  db.all(`SELECT * FROM motoristas`, [], (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
+app.delete('/api/motoristas/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM motoristas WHERE id = $1', [req.params.id]);
+    res.json({ mensagem: 'Motorista removido com sucesso!' });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-app.delete('/api/motoristas/:id', (req, res) => {
-  const { id } = req.params;
-  db.run(`DELETE FROM motoristas WHERE id = ?`, id, function(err) {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json({ mensagem: 'Motorista excluído com sucesso!' });
-  });
+// ==================== ROTAS DE VEÍCULOS ====================
+app.get('/api/veiculos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM veiculos ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// Rota para Cadastrar Veículo
-app.post('/api/veiculos', (req, res) => {
+app.post('/api/veiculos', async (req, res) => {
   const { placa, modelo, marca, ano } = req.body;
-  const query = `INSERT INTO veiculos (placa, modelo, marca, ano) VALUES (?, ?, ?, ?)`;
-  
-  db.run(query, [placa, modelo, marca, ano], function(err) {
-    if (err) return res.status(400).json({ erro: err.message });
-    res.json({ mensagem: 'Veículo cadastrado com sucesso!', id: this.lastID });
-  });
+  try {
+    const result = await pool.query(
+      'INSERT INTO veiculos (placa, modelo, marca, ano) VALUES ($1, $2, $3, $4) RETURNING *',
+      [placa.toUpperCase(), modelo, marca, ano]
+    );
+    res.json({ mensagem: 'Veículo cadastrado com sucesso!', veiculo: result.rows[0] });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-app.get('/api/veiculos', (req, res) => {
-  db.all(`SELECT * FROM veiculos`, [], (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
+app.delete('/api/veiculos/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM veiculos WHERE id = $1', [req.params.id]);
+    res.json({ mensagem: 'Veículo removido com sucesso!' });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-app.delete('/api/veiculos/:id', (req, res) => {
-  const { id } = req.params;
-  db.run(`DELETE FROM veiculos WHERE id = ?`, id, function(err) {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json({ mensagem: 'Veículo excluído com sucesso!' });
-  });
+// ==================== ROTAS DE JORNADAS ====================
+app.get('/api/jornadas', async (req, res) => {
+  try {
+    const query = `
+      SELECT j.id, m.nome as motorista_nome, v.modelo as veiculo_modelo, v.placa, j.data_inicio
+      FROM jornadas j
+      JOIN motoristas m ON j.motorista_id = m.id
+      JOIN veiculos v ON j.veiculo_id = v.id
+      ORDER BY j.id DESC
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// Rota para Criar Jornada
-app.post('/api/jornadas', (req, res) => {
+app.post('/api/jornadas', async (req, res) => {
   const { motorista_id, veiculo_id, data_inicio } = req.body;
-  const query = `INSERT INTO jornadas (motorista_id, veiculo_id, data_inicio) VALUES (?, ?, ?)`;
-  
-  db.run(query, [motorista_id, veiculo_id, data_inicio], function(err) {
-    if (err) return res.status(400).json({ erro: err.message });
-    res.json({ mensagem: 'Vínculo registrado com sucesso!', id: this.lastID });
-  });
+  try {
+    const result = await pool.query(
+      'INSERT INTO jornadas (motorista_id, veiculo_id, data_inicio) VALUES ($1, $2, $3) RETURNING *',
+      [motorista_id, veiculo_id, data_inicio]
+    );
+    res.json({ mensagem: 'Jornada vinculada com sucesso!', jornada: result.rows[0] });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-app.get('/api/jornadas', (req, res) => {
-  const query = `
-    SELECT j.id, j.data_inicio, m.nome as motorista_nome, v.modelo as veiculo_modelo, v.placa 
-    FROM jornadas j
-    JOIN motoristas m ON j.motorista_id = m.id
-    JOIN veiculos v ON j.veiculo_id = v.id
-  `;
-  db.all(query, [], (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
+// ==================== ROTAS DE MANUTENÇÕES / CUSTOS ====================
+app.get('/api/manutencoes', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM manutencoes ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// Rota para Buscar Histórico de Itinerário por Placa e Data
-app.get('/api/itinerario/:placa', (req, res) => {
+app.post('/api/manutencoes', async (req, res) => {
+  const { placa, tipo, descricao, custo, data } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO manutencoes (placa, tipo, descricao, custo, data) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [placa.toUpperCase(), tipo, descricao, custo, data]
+    );
+    res.json({ mensagem: 'Custo registrado com sucesso!', manutencao: result.rows[0] });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+app.delete('/api/manutencoes/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM manutencoes WHERE id = $1', [req.params.id]);
+    res.json({ mensagem: 'Registro de custo removido com sucesso!' });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+// ==================== ROTAS DE ITINERÁRIO E ALERTAS ====================
+app.get('/api/itinerario/:placa', async (req, res) => {
   const { placa } = req.params;
-  const { data } = req.query; 
-  
-  let query = `SELECT * FROM itinerarios WHERE placa = ?`;
-  let params = [placa];
-
-  if (data) {
-    query += ` AND DATE(horario) = ?`;
-    params.push(data);
-  }
-
-  query += ` ORDER BY horario DESC`;
-
-  db.all(query, params, (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
+  const { data } = req.query;
+  try {
+    let query = 'SELECT placa, rua, horario FROM posicoes WHERE placa = $1';
+    let params = [placa.toUpperCase()];
+    if (data) {
+      query += ' AND DATE(horario) = $2';
+      params.push(data);
+    }
+    query += ' ORDER BY horario DESC';
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// Rota para Consultar Multas
-app.get('/api/multas/consultar', (req, res) => {
+app.get('/api/alertas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM alertas ORDER BY id DESC LIMIT 50');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+app.get('/api/multas/consultar', async (req, res) => {
   const { placa, data } = req.query;
-  if (!placa || !data) return res.status(400).json({ erro: 'Informe a placa e a data/hora.' });
-
-  const query = `
-    SELECT m.nome, m.telefone, v.modelo, v.placa, j.data_inicio 
-    FROM jornadas j
-    JOIN motoristas m ON j.motorista_id = m.id
-    JOIN veiculos v ON j.veiculo_id = v.id
-    WHERE v.placa = ? AND j.data_inicio <= ?
-    ORDER BY j.data_inicio DESC
-    LIMIT 1
-  `;
-
-  db.all(query, [placa, data], (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-    res.json(rows);
-  });
+  try {
+    const query = `
+      SELECT m.nome, m.telefone, v.modelo, v.placa, j.data_inicio
+      FROM jornadas j
+      JOIN motoristas m ON j.motorista_id = m.id
+      JOIN veiculos v ON j.veiculo_id = v.id
+      WHERE v.placa = $1 AND j.data_inicio <= $2
+      ORDER BY j.data_inicio DESC
+      LIMIT 1
+    `;
+    const result = await pool.query(query, [placa.toUpperCase(), data]);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// Relatório em CSV
-const jsonToCsvDetalhado = (items) => {
-  const header = ['ID Jornada', 'Motorista', 'CNH', 'Veículo', 'Placa', 'Início da Jornada', 'Data/Hora da Rua', 'Rua Percorrida', 'Bairro', 'Cidade'];
-  const rows = items.map(item => [
-    item.jornada_id || '',
-    item.motorista_nome || 'Não vinculado',
-    item.motorista_cnh || '',
-    item.veiculo_modelo || '',
-    item.placa,
-    item.data_inicio || '',
-    item.horario_rua || 'Sem registro',
-    item.rua || '',
-    item.bairro || '',
-    item.cidade || ''
-  ]);
+// ==================== DASHBOARD & ESTATÍSTICAS ====================
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    const mot = await pool.query('SELECT COUNT(*) FROM motoristas');
+    const vei = await pool.query('SELECT COUNT(*) FROM veiculos');
+    const jor = await pool.query('SELECT COUNT(*) FROM jornadas');
+    const alt = await pool.query('SELECT COUNT(*) FROM alertas');
+    const cus = await pool.query('SELECT SUM(custo) as total FROM manutencoes');
 
-  return [
-    header.join(','),
-    ...rows.map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(','))
-  ].join('\n');
-};
+    res.json({
+      total_motoristas: parseInt(mot.rows[0].count),
+      total_veiculos: parseInt(vei.rows[0].count),
+      total_jornadas: parseInt(jor.rows[0].count),
+      total_alertas: parseInt(alt.rows[0].count),
+      custo_total: parseFloat(cus.rows[0].total || 0)
+    });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
 
-app.get('/api/relatorios/completo.csv', (req, res) => {
+app.get('/api/dashboard/grafico-alertas', async (req, res) => {
+  try {
+    const query = `SELECT placa, COUNT(*) as total FROM alertas GROUP BY placa`;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+app.get('/api/dashboard/grafico-turnos', async (req, res) => {
+  try {
+    const query = `
+      SELECT m.nome as motorista, COUNT(j.id) as total
+      FROM jornadas j
+      JOIN motoristas m ON j.motorista_id = m.id
+      GROUP BY m.nome
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
+// ==================== RELATÓRIO EXCEL (CSV CORRIGIDO) ====================
+app.get('/api/relatorios/completo.csv', async (req, res) => {
   const { data, motorista_id } = req.query;
+  try {
+    let query = `
+      SELECT j.id as id_jornada, m.nome as motorista, m.cnh, v.modelo as veiculo, v.placa, 
+             j.data_inicio, p.horario as data_rua, p.rua, p.bairro, p.cidade
+      FROM jornadas j
+      JOIN motoristas m ON j.motorista_id = m.id
+      JOIN veiculos v ON j.veiculo_id = v.id
+      LEFT JOIN posicoes p ON p.placa = v.placa
+      WHERE 1=1
+    `;
+    let params = [];
+    let paramIndex = 1;
 
-  let query = `
-    SELECT j.id as jornada_id, j.data_inicio, 
-           m.id as motorista_id, m.nome as motorista_nome, m.cnh as motorista_cnh, 
-           v.modelo as veiculo_modelo, v.placa,
-           i.horario as horario_rua, i.rua, i.bairro, i.cidade
-    FROM veiculos v
-    LEFT JOIN jornadas j ON v.id = j.veiculo_id
-    LEFT JOIN motoristas m ON j.motorista_id = m.id
-    LEFT JOIN itinerarios i ON v.placa = i.placa
-    WHERE 1=1
-  `;
-  
-  let params = [];
+    if (data) {
+      query += ` AND DATE(j.data_inicio) = $${paramIndex}`;
+      params.push(data);
+      paramIndex++;
+    }
+    if (motorista_id) {
+      query += ` AND m.id = $${paramIndex}`;
+      params.push(motorista_id);
+      paramIndex++;
+    }
 
-  if (data && data !== 'undefined' && data !== '') {
-    query += ` AND (DATE(j.data_inicio) = ? OR DATE(i.horario) = ?)`;
-    params.push(data, data);
+    const result = await pool.query(query, params);
+
+    // Configura headers com suporte a UTF-8 e delimitador por ponto e vírgula para abrir perfeito no Excel
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=relatorio_frota.csv');
+    
+    // Escreve o BOM do UTF-8 para o Excel reconhecer os acentos automaticamente
+    res.write('\ufeff');
+
+    // Cabeçalho separado por ponto e vírgula (;)
+    res.write('ID Jornada;Motorista;CNH;Veiculo;Placa;Inicio da Jornada;Data/Hora da Rua;Rua Percorrida;Bairro;Cidade\n');
+
+    result.rows.forEach(row => {
+      const linha = [
+        row.id_jornada,
+        `"${(row.motorista || '').replace(/"/g, '""')}"`,
+        `"${(row.cnh || '').replace(/"/g, '""')}"`,
+        `"${(row.veiculo || '').replace(/"/g, '""')}"`,
+        row.placa,
+        row.data_inicio,
+        row.data_rua || '',
+        `"${(row.rua || 'Não registrada').replace(/"/g, '""')}"`,
+        `"${(row.bairro || '').replace(/"/g, '""')}"`,
+        `"${(row.cidade || '').replace(/"/g, '""')}"`
+      ].join(';');
+
+      res.write(linha + '\n');
+    });
+
+    res.end();
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
   }
-
-  if (motorista_id && motorista_id !== 'undefined' && motorista_id !== '') {
-    query += ` AND m.id = ?`;
-    params.push(motorista_id);
-  }
-
-  query += ` ORDER BY j.data_inicio DESC, i.horario DESC`;
-
-  db.all(query, params, (err, rows) => {
-    if (err) return res.status(500).json({ erro: err.message });
-
-    const csv = jsonToCsvDetalhado(rows);
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename=relatorio_filtrado.csv');
-    res.status(200).send(csv);
-  });
 });
 
-// WebSocket para posições ao vivo e Alertas de Velocidade
+// ==================== WEBSOCKET (GPS & ALERTAS) ====================
 io.on('connection', (socket) => {
-  socket.on('atualizar_localizacao', (dados) => {
-    io.emit('posicao_motorista', dados);
+  console.log('Cliente conectado ao WebSocket:', socket.id);
 
-    const VELOCIDADE_LIMITE = 80;
-    const velocidadeAtual = dados.velocidade || 0;
+  socket.on('atualizar_localizacao', async (dados) => {
+    const { placa, latitude, longitude, velocidade, horario } = dados;
+    const rua = "Av. Paulista, 1000"; // Simulação de geocodificação reversa
+    const bairro = "Bela Vista";
+    const cidade = "São Paulo";
 
-    if (velocidadeAtual > VELOCIDADE_LIMITE) {
-      const mensagemAlerta = `Veículo ${dados.placa} ultrapassou o limite! Velocidade: ${velocidadeAtual} km/h`;
-      
-      const queryAlerta = `INSERT INTO alertas (placa, velocidade, limite, horario, mensagem) VALUES (?, ?, ?, ?, ?)`;
-      db.run(queryAlerta, [dados.placa, velocidadeAtual, VELOCIDADE_LIMITE, dados.horario || new Date().toISOString(), mensagemAlerta], (err) => {
-        if (!err) {
-          io.emit('novo_alerta', {
-            placa: dados.placa,
-            velocidade: velocidadeAtual,
-            limite: VELOCIDADE_LIMITE,
-            horario: dados.horario || new Date().toISOString(),
-            mensagem: mensagemAlerta
-          });
-        }
-      });
+    try {
+      // Salva a posição no banco
+      await pool.query(
+        'INSERT INTO posicoes (placa, latitude, longitude, velocidade, rua, bairro, cidade, horario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [placa.toUpperCase(), latitude, longitude, velocidade, rua, bairro, cidade, horario]
+      );
+
+      // Regra de Alerta de Excesso de Velocidade (Ex: acima de 80 km/h)
+      if (velocidade > 80) {
+        const mensagemAlerta = `Veículo ${placa.toUpperCase()} ultrapassou o limite de velocidade (${velocidade} km/h)`;
+        const alertaRes = await pool.query(
+          'INSERT INTO alertas (placa, mensagem, horario) VALUES ($1, $2, $3) RETURNING *',
+          [placa.toUpperCase(), mensagemAlerta, horario]
+        );
+        io.emit('novo_alerta', alertaRes.rows[0]);
+      }
+
+      // Repassa a posição ao vivo para o painel web
+      io.emit('posicao_motorista', { placa: placa.toUpperCase(), latitude, longitude, velocidade, rua, horario });
+    } catch (err) {
+      console.error("Erro ao processar posição:", err);
     }
   });
+
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id);
+  });
 });
 
-const PORT = 3001;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });

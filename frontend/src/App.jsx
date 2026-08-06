@@ -100,7 +100,7 @@ export default function App() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (usuarioLogin === 'adminsunny' && senhaLogin === 'sunny@137') {
+    if (usuarioLogin === 'admin' && senhaLogin === 'admin123') {
       localStorage.setItem('isAdminLoggedIn', 'true');
       setIsLogged(true);
     } else {
@@ -278,7 +278,7 @@ export default function App() {
         <form onSubmit={handleLogin} style={{ background: '#1e293b', padding: '40px', borderRadius: '12px', width: '320px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid #334155' }}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ background: '#0284c7', width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}><Truck size={28} color="#fff" /></div>
-            <h2 style={{ fontSize: '20px', fontWeight: '700', margin: '0 0 4px 0', color: '#f8fafc' }}>LC Gestão de Frotas</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: '700', margin: '0 0 4px 0', color: '#f8fafc' }}>☀️ Sunny Wear</h2>
             <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Acesso Restrito ao Administrador</p>
           </div>
           <div style={{ marginBottom: '16px' }}>
@@ -304,8 +304,8 @@ export default function App() {
               <Truck size={24} color="#fff" />
             </div>
             <div>
-              <h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0, letterSpacing: '-0.5px' }}>LC Gestão de Frotas</h1>
-              <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Sistema de Controle Logístico</p>
+              <h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0, letterSpacing: '-0.5px' }}>☀️ Sunny Wear Sistema</h1>
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Controle Logístico e Rastreamento</p>
             </div>
           </div>
           <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#ef4444', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>

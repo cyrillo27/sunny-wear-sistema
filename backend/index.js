@@ -249,7 +249,7 @@ app.get('/api/dashboard/stats', async (req, res) => {
 
 app.get('/api/dashboard/grafico-alertas', async (req, res) => {
   try {
-    const query = `SELECT placa, COUNT(*) as total FROM alertas GROUP BY placa`;
+    const query = `SELECT placa, CAST(COUNT(*) AS INTEGER) as total FROM alertas GROUP BY placa`;
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ erro: err.message }); }
@@ -258,7 +258,7 @@ app.get('/api/dashboard/grafico-alertas', async (req, res) => {
 app.get('/api/dashboard/grafico-turnos', async (req, res) => {
   try {
     const query = `
-      SELECT INITCAP(m.nome) as motorista, COUNT(j.id) as total
+      SELECT INITCAP(m.nome) as motorista, CAST(COUNT(j.id) AS INTEGER) as total
       FROM jornadas j
       JOIN motoristas m ON j.motorista_id = m.id
       GROUP BY INITCAP(m.nome)

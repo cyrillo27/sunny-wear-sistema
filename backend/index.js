@@ -258,10 +258,10 @@ app.get('/api/dashboard/grafico-alertas', async (req, res) => {
 app.get('/api/dashboard/grafico-turnos', async (req, res) => {
   try {
     const query = `
-      SELECT m.nome as motorista, COUNT(j.id) as total
+      SELECT INITCAP(m.nome) as motorista, COUNT(j.id) as total
       FROM jornadas j
       JOIN motoristas m ON j.motorista_id = m.id
-      GROUP BY m.nome
+      GROUP BY INITCAP(m.nome)
     `;
     const result = await pool.query(query);
     res.json(result.rows);
@@ -297,14 +297,10 @@ app.get('/api/relatorios/completo.csv', async (req, res) => {
 
     const result = await pool.query(query, params);
 
-    // Configura headers para forçar UTF-8 e delimitador em ponto e vírgula (;) nativo do Excel brasileiro
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=relatorio_frota.csv');
     
-    // Insere o BOM do UTF-8 para os acentos aparecerem perfeitamente no Excel
     res.write('\ufeff');
-
-    // Cabeçalho separado rigorosamente por ponto e vírgula
     res.write('ID Jornada;Motorista;CNH;Veiculo;Placa;Inicio da Jornada;Data/Hora da Rua;Rua Percorrida;Bairro;Cidade\n');
 
     result.rows.forEach(row => {

@@ -268,7 +268,7 @@ app.get('/api/dashboard/grafico-turnos', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// ==================== RELATÓRIO EXCEL (CSV PERFEITO COM PONTO E VÍRGULA) ====================
+// ==================== RELATÓRIO EXCEL (CSV CORRIGIDO) ====================
 app.get('/api/relatorios/completo.csv', async (req, res) => {
   const { data, motorista_id } = req.query;
   try {
@@ -297,14 +297,14 @@ app.get('/api/relatorios/completo.csv', async (req, res) => {
 
     const result = await pool.query(query, params);
 
-    // Configura headers para forçar UTF-8 e delimitador em ponto e vírgula (;) nativo do Excel brasileiro
+    // Configura headers com suporte a UTF-8 e delimitador por ponto e vírgula para abrir perfeito no Excel
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=relatorio_frota.csv');
     
-    // Insere o BOM do UTF-8 para os acentos aparecerem perfeitamente no Excel
+    // Escreve o BOM do UTF-8 para o Excel reconhecer os acentos automaticamente
     res.write('\ufeff');
 
-    // Cabeçalho separado rigorosamente por ponto e vírgula
+    // Cabeçalho separado por ponto e vírgula (;)
     res.write('ID Jornada;Motorista;CNH;Veiculo;Placa;Inicio da Jornada;Data/Hora da Rua;Rua Percorrida;Bairro;Cidade\n');
 
     result.rows.forEach(row => {
@@ -336,16 +336,18 @@ io.on('connection', (socket) => {
 
   socket.on('atualizar_localizacao', async (dados) => {
     const { placa, latitude, longitude, velocidade, horario } = dados;
-    const rua = "Av. Paulista, 1000"; 
+    const rua = "Av. Paulista, 1000"; // Simulação de geocodificação reversa
     const bairro = "Bela Vista";
     const cidade = "São Paulo";
 
     try {
+      // Salva a posição no banco
       await pool.query(
         'INSERT INTO posicoes (placa, latitude, longitude, velocidade, rua, bairro, cidade, horario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
         [placa.toUpperCase(), latitude, longitude, velocidade, rua, bairro, cidade, horario]
       );
 
+      // Regra de Alerta de Excesso de Velocidade (Ex: acima de 80 km/h)
       if (velocidade > 80) {
         const mensagemAlerta = `Veículo ${placa.toUpperCase()} ultrapassou o limite de velocidade (${velocidade} km/h)`;
         const alertaRes = await pool.query(
@@ -355,6 +357,7 @@ io.on('connection', (socket) => {
         io.emit('novo_alerta', alertaRes.rows[0]);
       }
 
+      // Repassa a posição ao vivo para o painel web
       io.emit('posicao_motorista', { placa: placa.toUpperCase(), latitude, longitude, velocidade, rua, horario });
     } catch (err) {
       console.error("Erro ao processar posição:", err);

@@ -358,16 +358,42 @@ export default function App() {
               <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '16px' }}>📊 Alertas de Excesso de Velocidade por Veículo</h3>
                 {dadosGraficoAlertas.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum dado de alerta registrado.</p> : (
-                  <div style={{ width: '100%', height: '260px' }}>
-                    <ResponsiveContainer><BarChart data={dadosGraficoAlertas}><XAxis dataKey="placa" stroke="#64748b" fontSize={12} /><YAxis stroke="#64748b" fontSize={12} allowDecimals={false} /><Tooltip /><Bar dataKey="total" fill="#0284c7" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer>
+                  <div style={{ width: '100%', height: '280px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={dadosGraficoAlertas}>
+                        <XAxis dataKey="placa" stroke="#64748b" fontSize={12} />
+                        <YAxis stroke="#64748b" fontSize={12} allowDecimals={false} />
+                        <Tooltip />
+                        <Bar dataKey="total" fill="#0284c7" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 )}
               </div>
-              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '16px' }}>🍩 Distribuição de Turnos por Motorista</h3>
-                {dadosGraficoTurnos.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum turno registrado.</p> : (
-                  <div style={{ width: '100%', height: '260px' }}>
-                    <ResponsiveContainer><PieChart><Pie data={dadosGraficoTurnos} dataKey="total" nameKey="motorista" cx="50%" cy="50%" outerRadius={80} label>{dadosGraficoTurnos.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer>
+
+              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '16px', width: '100%', textAlign: 'left' }}>🍩 Distribuição de Turnos por Motorista</h3>
+                {dadosGraficoTurnos.length === 0 ? (
+                  <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum turno registrado.</p>
+                ) : (
+                  <div style={{ width: '100%', height: '280px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <PieChart width={360} height={260}>
+                      <Pie 
+                        data={dadosGraficoTurnos} 
+                        dataKey="total" 
+                        nameKey="motorista" 
+                        cx="50%" 
+                        cy="50%" 
+                        outerRadius={80} 
+                        label
+                      >
+                        {dadosGraficoTurnos.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
                   </div>
                 )}
               </div>

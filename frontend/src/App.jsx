@@ -346,7 +346,7 @@ export default function App() {
               </div>
               <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ background: '#fef3c7', color: '#d97706', padding: '12px', borderRadius: '10px' }}><Wrench size={22} /></div>
-                <div><p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo Total</p><h3 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#0f172a' }}>R$ {(stats.custo_total || 0).toFixed(2)}</h3></div>
+                <div><p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo Total</p><h3 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#0f172a' }}>R$ {Number(stats.custo_total || 0).toFixed(2)}</h3></div>
               </div>
               <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px', borderRadius: '10px' }}><Bell size={22} /></div>
@@ -485,7 +485,7 @@ export default function App() {
                       <div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '2px' }}><span style={{ fontSize: '12px', background: '#fef3c7', color: '#d97706', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{m.tipo}</span><code style={{ background: '#cbd5e1', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', fontSize: '12px' }}>{m.placa}</code></div>
                         <p style={{ margin: '2px 0', fontSize: '14px', color: '#1e293b' }}>{m.descricao}</p>
-                        <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>📅 {m.data} | 💰 <strong>R$ {m.custo.toFixed(2)}</strong></p>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>📅 {m.data} | 💰 <strong>R$ {Number(m.custo || 0).toFixed(2)}</strong></p>
                       </div>
                       <button onClick={() => deletarManutencao(m.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={16} /></button>
                     </div>

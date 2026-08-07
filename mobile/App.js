@@ -3,16 +3,22 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'reac
 import * as Location from 'expo-location';
 import { io } from 'socket.io-client';
 
-// CONECTADO AO BACKEND NO RENDER
 const API_URL = 'https://sunny-wear-sistema.onrender.com';
 const socket = io(API_URL);
 
 export default function App() {
+  const [abaAtiva, setAbaAtiva] = useState('rastreio'); // 'rastreio' ou 'abastecimento'
+
+  // Estados de Rastreamento
   const [placa, setPlaca] = useState('ABC-1234');
   const [rastreando, setRastreando] = useState(false);
   const [localizacaoAtual, setLocalizacaoAtual] = useState(null);
   const [velocidadeAtual, setVelocidadeAtual] = useState(0);
   const [subscription, setSubscription] = useState(null);
+
+  // Estados de Abastecimento
+  const [placaAbastecimento, setPlacaAbastecimento] = useState('ABC-1234');
+  const [valorAbastecimento, setValorAbastecimento] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -34,17 +40,16 @@ export default function App() {
     const sub = await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.High,
-        timeInterval: 3000, // Envia a cada 3 segundos
-        distanceInterval: 5,  // Ou a cada 5 metros movimentados
+        timeInterval: 3000, 
+        distanceInterval: 5,  
       },
       (position) => {
         const { latitude, longitude, speed } = position.coords;
-        const velocidadeKmH = speed ? Math.round(speed * 3.6) : 0; // Converte m/s para km/h
+        const velocidadeKmH = speed ? Math.round(speed * 3.6) : 0; 
 
         setLocalizacaoAtual({ latitude, longitude });
         setVelocidadeAtual(velocidadeKmH);
 
-        // Envia via WebSocket para o backend no Render
         socket.emit('atualizar_localizacao', {
           placa: placa.toUpperCase(),
           latitude,
@@ -68,39 +73,113 @@ export default function App() {
     Alert.alert('Parado', 'Rastreamento finalizado.');
   };
 
+  const registrarAbastecimento = async () => {
+    if (!placaAbastecimento || !valorAbastecimento) {
+      Alert.alert('Erro', 'Preencha a placa e o valor do abastecimento.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/mobile/abastecimento`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          placa: placaAbastecimento, 
+          valor: parseFloat(valorAbastecimento) 
+        })
+      });
+
+      if (response.ok) {
+        Alert.alert('Sucesso', 'Abastecimento enviado direto para a aba de Custos do painel!');
+        setValorAbastecimento('');
+      } else {
+        Alert.alert('Erro', 'Não foi possível registrar o abastecimento.');
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Falha de conexão com o servidor.');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>☀️ Sunny Wear Motorista</Text>
-      <Text style={styles.subtitulo}>Rastreamento GPS em Tempo Real</Text>
+      <Text style={styles.subtitulo}>Controle Operacional Móvel</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Placa do Veículo:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Ex: ABC-1234"
-          value={placa}
-          onChangeText={setPlaca}
-          editable={!rastreando}
-        />
+      {/* Seletor de Abas */}
+      <View style={styles.menuAbas}>
+        <TouchableOpacity 
+          style={[styles.abaBotao, abaAtiva === 'rastreio' && styles.abaAtiva]} 
+          onPress={() => setAbaAtiva('rastreio')}
+        >
+          <Text style={[styles.abaTexto, abaAtiva === 'rastreio' && styles.abaTextoAtivo]}>Rastreamento</Text>
+        </TouchableOpacity>
 
-        {localizacaoAtual && (
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>📍 Lat: {localizacaoAtual.latitude.toFixed(4)}</Text>
-            <Text style={styles.infoText}>📍 Lng: {localizacaoAtual.longitude.toFixed(4)}</Text>
-            <Text style={styles.infoText}>🚗 Velocidade: {velocidadeAtual} km/h</Text>
-          </View>
-        )}
-
-        {!rastreando ? (
-          <TouchableOpacity style={styles.botaoIniciar} onPress={iniciarRastreamento}>
-            <Text style={styles.textoBotao}>Iniciar Rastreamento</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.botaoParar} onPress={pararRastreamento}>
-            <Text style={styles.textoBotao}>Parar Rastreamento</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity 
+          style={[styles.abaBotao, abaAtiva === 'abastecimento' && styles.abaAtiva]} 
+          onPress={() => setAbaAtiva('abastecimento')}
+        >
+          <Text style={[styles.abaTexto, abaAtiva === 'abastecimento' && styles.abaTextoAtivo]}>Abastecimento</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* CONTEÚDO DA ABA: RASTREAMENTO */}
+      {abaAtiva === 'rastreio' ? (
+        <View style={styles.card}>
+          <Text style={styles.label}>Placa do Veículo:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: ABC-1234"
+            value={placa}
+            onChangeText={setPlaca}
+            editable={!rastreando}
+            autoCapitalize="characters"
+          />
+
+          {localizacaoAtual && (
+            <View style={styles.infoBox}>
+              <Text style={styles.infoText}>📍 Lat: {localizacaoAtual.latitude.toFixed(4)}</Text>
+              <Text style={styles.infoText}>📍 Lng: {localizacaoAtual.longitude.toFixed(4)}</Text>
+              <Text style={styles.infoText}>🚗 Velocidade: {velocidadeAtual} km/h</Text>
+            </View>
+          )}
+
+          {!rastreando ? (
+            <TouchableOpacity style={styles.botaoIniciar} onPress={iniciarRastreamento}>
+              <Text style={styles.textoBotao}>Iniciar Rastreamento</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.botaoParar} onPress={pararRastreamento}>
+              <Text style={styles.textoBotao}>Parar Rastreamento</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : (
+        /* CONTEÚDO DA ABA: ABASTECIMENTO */
+        <View style={styles.card}>
+          <Text style={styles.label}>Placa do Veículo:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: ABC-1234"
+            value={placaAbastecimento}
+            onChangeText={setPlacaAbastecimento}
+            autoCapitalize="characters"
+          />
+
+          <Text style={styles.label}>Valor do Abastecimento (R$):</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="0.00"
+            value={valorAbastecimento}
+            onChangeText={setValorAbastecimento}
+            keyboardDataType="numeric"
+            keyboardType="numeric"
+          />
+
+          <TouchableOpacity style={styles.botaoAbastecer} onPress={registrarAbastecimento}>
+            <Text style={styles.textoBotao}>Enviar Abastecimento</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -122,7 +201,37 @@ const styles = StyleSheet.create({
   subtitulo: {
     fontSize: 14,
     color: '#64748b',
-    marginBottom: 24,
+    marginBottom: 16,
+  },
+  menuAbas: {
+    flexDirection: 'row',
+    backgroundColor: '#cbd5e1',
+    borderRadius: 8,
+    padding: 4,
+    width: '100%',
+    maxWidth: 380,
+    marginBottom: 16,
+  },
+  abaBotao: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  abaAtiva: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    elevation: 2,
+  },
+  abaTexto: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  abaTextoAtivo: {
+    color: '#0284c7',
   },
   card: {
     backgroundColor: '#fff',
@@ -172,6 +281,12 @@ const styles = StyleSheet.create({
   },
   botaoParar: {
     backgroundColor: '#dc2626',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  botaoAbastecer: {
+    backgroundColor: '#d97706',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',

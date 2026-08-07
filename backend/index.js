@@ -187,6 +187,21 @@ app.delete('/api/manutencoes/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
+// ==================== ROTA MOBILE: ABASTECIMENTO ====================
+app.post('/api/mobile/abastecimento', async (req, res) => {
+  const { placa, valor } = req.body;
+  try {
+    const dataAtual = new Date().toISOString().split('T')[0];
+    const result = await pool.query(
+      'INSERT INTO manutencoes (placa, tipo, descricao, custo, data) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [placa.toUpperCase(), 'Combustível', 'Abastecimento via App Mobile', valor, dataAtual]
+    );
+    res.status(201).json({ mensagem: 'Abastecimento registrado com sucesso!', manutencao: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
 // ==================== ROTAS DE ITINERÁRIO E ALERTAS ====================
 app.get('/api/itinerario/:placa', async (req, res) => {
   const { placa } = req.params;

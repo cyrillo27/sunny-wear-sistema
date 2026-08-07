@@ -67,6 +67,13 @@ export default function App() {
   const [dadosGraficoTurnos, setDadosGraficoTurnos] = useState([]);
   const [posicoesAoVivo, setPosicoesAoVivo] = useState({});
 
+  // Função auxiliar para tratar vírgulas e pontos em inputs numéricos (centavos)
+  const converterValorDecimal = (valor) => {
+    if (!valor) return 0;
+    const valorLimpo = String(valor).replace(',', '.');
+    return parseFloat(valorLimpo) || 0;
+  };
+
   useEffect(() => {
     if (!isLogged) return;
     carregarDados();
@@ -205,10 +212,12 @@ export default function App() {
     const placaSelecionada = placaManutencao || (veiculosList.length > 0 ? veiculosList[0].placa : '');
     if (!placaSelecionada) { alert("Selecione um veículo."); return; }
 
+    const custoConvertido = converterValorDecimal(custoManutencao);
+
     const res = await fetch(`${API_URL}/api/manutencoes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ placa: placaSelecionada, tipo: tipoManutencao, descricao: descricaoManutencao, custo: parseFloat(custoManutencao), data: dataManutencao })
+      body: JSON.stringify({ placa: placaSelecionada, tipo: tipoManutencao, descricao: descricaoManutencao, custo: custoConvertido, data: dataManutencao })
     });
     const data = await res.json();
     alert(data.mensagem || data.erro);
@@ -496,7 +505,7 @@ export default function App() {
                 <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Tipo de Custo</label><select value={tipoManutencao} onChange={e => setTipoManutencao(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }}><option value="Combustível">⛽ Combustível</option><option value="Revisão Preventiva">🔧 Revisão Preventiva</option><option value="Manutenção Corretiva">🛠️ Manutenção Corretiva</option><option value="Outros">📦 Outros</option></select></div>
                 <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Descrição</label><input type="text" placeholder="Ex: Troca de óleo" value={descricaoManutencao} onChange={e => setDescricaoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo (R$)</label><input type="number" step="0.01" placeholder="150.00" value={custoManutencao} onChange={e => setCustoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+                  <div style={{ flex: 1 }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo (R$)</label><input type="text" placeholder="150.50 ou 150,50" value={custoManutencao} onChange={e => setCustoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
                   <div style={{ flex: 1 }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataManutencao} onChange={e => setDataManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
                 </div>
                 <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Salvar Custo</button>

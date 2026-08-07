@@ -22,6 +22,15 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Função auxiliar robusta para tratar valores decimais (centavos) no Backend
+const converterValorDecimal = (valor) => {
+  if (typeof valor === 'number') return valor;
+  if (!valor) return 0;
+  // Substitui vírgula por ponto caso venha no formato brasileiro (ex: 150,50 -> 150.50)
+  const valorTratado = String(valor).replace(',', '.');
+  return parseFloat(valorTratado) || 0;
+};
+
 // Criar Tabelas caso não existam
 async function criarTabelas() {
   try {
@@ -172,9 +181,12 @@ app.get('/api/manutencoes', async (req, res) => {
 app.post('/api/manutencoes', async (req, res) => {
   const { placa, tipo, descricao, custo, data } = req.body;
   try {
+    // Garante conversão correta com centavos
+    const custoDecimal = converterValorDecimal(custo);
+
     const result = await pool.query(
       'INSERT INTO manutencoes (placa, tipo, descricao, custo, data) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [placa.toUpperCase(), tipo, descricao, custo, data]
+      [placa.toUpperCase(), tipo, descricao, custoDecimal, data]
     );
     res.json({ mensagem: 'Custo registrado com sucesso!', manutencao: result.rows[0] });
   } catch (err) { res.status(500).json({ erro: err.message }); }
@@ -192,9 +204,11 @@ app.post('/api/mobile/abastecimento', async (req, res) => {
   const { placa, valor } = req.body;
   try {
     const dataAtual = new Date().toISOString().split('T')[0];
+    const valorDecimal = converterValorDecimal(valor);
+
     const result = await pool.query(
       'INSERT INTO manutencoes (placa, tipo, descricao, custo, data) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [placa.toUpperCase(), 'Combustível', 'Abastecimento via App Mobile', valor, dataAtual]
+      [placa.toUpperCase(), 'Combustível', 'Abastecimento via App Mobile', valorDecimal, dataAtual]
     );
     res.status(201).json({ mensagem: 'Abastecimento registrado com sucesso!', manutencao: result.rows[0] });
   } catch (err) {

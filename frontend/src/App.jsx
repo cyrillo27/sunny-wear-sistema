@@ -67,7 +67,6 @@ export default function App() {
   const [dadosGraficoTurnos, setDadosGraficoTurnos] = useState([]);
   const [posicoesAoVivo, setPosicoesAoVivo] = useState({});
 
-  // Função auxiliar para tratar vírgulas e pontos em inputs numéricos (centavos)
   const converterValorDecimal = (valor) => {
     if (!valor) return 0;
     const valorLimpo = String(valor).replace(',', '.');
@@ -171,91 +170,170 @@ export default function App() {
 
   const cadastrarMotorista = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_URL}/api/motoristas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, cnh, telefone })
-    });
-    const data = await res.json();
-    alert(data.mensagem || data.erro);
-    setNome(''); setCnh(''); setTelefone('');
-    carregarDados(); carregarStats(); carregarGraficos();
+    if (!nome.trim() || !cnh.trim()) {
+      alert("Por favor, preencha o Nome e a CNH do motorista.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/motoristas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: nome.trim(), cnh: cnh.trim(), telefone: telefone.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erro || "Erro ao cadastrar motorista.");
+      
+      alert(data.mensagem);
+      setNome(''); setCnh(''); setTelefone('');
+      carregarDados(); carregarStats(); carregarGraficos();
+    } catch (err) {
+      alert("Erro: " + err.message);
+    }
   };
 
   const deletarMotorista = async (id) => {
     if (!confirm("Deseja realmente apagar este motorista?")) return;
-    await fetch(`${API_URL}/api/motoristas/${id}`, { method: 'DELETE' });
-    carregarDados(); carregarStats(); carregarGraficos();
+    try {
+      await fetch(`${API_URL}/api/motoristas/${id}`, { method: 'DELETE' });
+      carregarDados(); carregarStats(); carregarGraficos();
+    } catch (err) {
+      alert("Erro ao excluir motorista.");
+    }
   };
 
   const cadastrarVeiculo = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_URL}/api/veiculos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ placa, modelo, marca, ano })
-    });
-    const data = await res.json();
-    alert(data.mensagem || data.erro);
-    setPlaca(''); setModelo(''); setMarca(''); setAno('');
-    carregarDados(); carregarStats(); carregarGraficos();
+    if (!placa.trim() || !modelo.trim() || !marca.trim()) {
+      alert("Preencha todos os campos obrigatórios do veículo.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/veiculos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ placa: placa.trim().toUpperCase(), modelo: modelo.trim(), marca: marca.trim(), ano: parseInt(ano) || null })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erro || "Erro ao cadastrar veículo.");
+
+      alert(data.mensagem);
+      setPlaca(''); setModelo(''); setMarca(''); setAno('');
+      carregarDados(); carregarStats(); carregarGraficos();
+    } catch (err) {
+      alert("Erro: " + err.message);
+    }
   };
 
   const deletarVeiculo = async (id) => {
     if (!confirm("Deseja realmente apagar este veículo?")) return;
-    await fetch(`${API_URL}/api/veiculos/${id}`, { method: 'DELETE' });
-    carregarDados(); carregarStats(); carregarGraficos();
+    try {
+      await fetch(`${API_URL}/api/veiculos/${id}`, { method: 'DELETE' });
+      carregarDados(); carregarStats(); carregarGraficos();
+    } catch (err) {
+      alert("Erro ao excluir veículo.");
+    }
   };
 
   const cadastrarManutencao = async (e) => {
     e.preventDefault();
     const placaSelecionada = placaManutencao || (veiculosList.length > 0 ? veiculosList[0].placa : '');
-    if (!placaSelecionada) { alert("Selecione um veículo."); return; }
+    if (!placaSelecionada) { 
+      alert("Selecione um veículo válido."); 
+      return; 
+    }
 
     const custoConvertido = converterValorDecimal(custoManutencao);
+    if (isNaN(custoConvertido) || custoConvertido <= 0) {
+      alert("Insira um valor de custo válido e maior que zero.");
+      return;
+    }
 
-    const res = await fetch(`${API_URL}/api/manutencoes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ placa: placaSelecionada, tipo: tipoManutencao, descricao: descricaoManutencao, custo: custoConvertido, data: dataManutencao })
-    });
-    const data = await res.json();
-    alert(data.mensagem || data.erro);
-    setDescricaoManutencao(''); setCustoManutencao('');
-    carregarManutencoes(); carregarStats();
+    try {
+      const res = await fetch(`${API_URL}/api/manutencoes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          placa: placaSelecionada, 
+          tipo: tipoManutencao, 
+          descricao: descricaoManutencao.trim(), 
+          custo: custoConvertido, 
+          data: dataManutencao 
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erro || "Erro ao registrar custo.");
+
+      alert(data.mensagem);
+      setDescricaoManutencao(''); setCustoManutencao('');
+      carregarManutencoes(); carregarStats();
+    } catch (err) {
+      alert("Erro: " + err.message);
+    }
   };
 
   const deletarManutencao = async (id) => {
     if (!confirm("Deseja realmente apagar este registro de custo?")) return;
-    await fetch(`${API_URL}/api/manutencoes/${id}`, { method: 'DELETE' });
-    carregarManutencoes(); carregarStats();
+    try {
+      await fetch(`${API_URL}/api/manutencoes/${id}`, { method: 'DELETE' });
+      carregarManutencoes(); carregarStats();
+    } catch (err) {
+      alert("Erro ao excluir registro de custo.");
+    }
   };
 
   const criarJornada = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_URL}/api/jornadas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ motorista_id: motoristaSelecionado, veiculo_id: veiculoSelecionado, data_inicio: dataIniciada })
-    });
-    const data = await res.json();
-    alert(data.mensagem || data.erro);
-    carregarDados(); carregarStats(); carregarGraficos();
+    if (!motoristaSelecionado || !veiculoSelecionado || !dataIniciada) {
+      alert("Preencha todos os campos para registrar o vínculo.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/jornadas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motorista_id: motoristaSelecionado, veiculo_id: veiculoSelecionado, data_inicio: dataIniciada })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erro || "Erro ao registrar vínculo.");
+
+      alert(data.mensagem);
+      carregarDados(); carregarStats(); carregarGraficos();
+    } catch (err) {
+      alert("Erro: " + err.message);
+    }
   };
 
   const consultarMulta = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API_URL}/api/multas/consultar?placa=${buscaPlaca}&data=${buscaData}`);
-    setResultadoMulta(await res.json());
+    if (!buscaPlaca || !buscaData) {
+      alert("Informe a placa e a data/hora para a consulta.");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/multas/consultar?placa=${buscaPlaca}&data=${buscaData}`);
+      setResultadoMulta(await res.json());
+    } catch (e) {
+      alert("Erro ao consultar multas.");
+    }
   };
 
   const buscarItinerario = async (e) => {
     e.preventDefault();
-    if (!placaItinerario) return;
-    let url = `${API_URL}/api/itinerario/${placaItinerario}`;
-    if (dataItinerario) url += `?data=${dataItinerario}`;
-    const res = await fetch(url);
-    setHistoricoItinerario(await res.json());
+    if (!placaItinerario) {
+      alert("Selecione uma placa para buscar o itinerário.");
+      return;
+    }
+    try {
+      let url = `${API_URL}/api/itinerario/${placaItinerario}`;
+      if (dataItinerario) url += `?data=${dataItinerario}`;
+      const res = await fetch(url);
+      setHistoricoItinerario(await res.json());
+    } catch (e) {
+      alert("Erro ao buscar itinerário.");
+    }
   };
 
   const simularMovimento = (placaVeiculo) => {
@@ -413,7 +491,10 @@ export default function App() {
         {aba === 'cadastros' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
             <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><Users size={18} color="#0284c7" /> Novo Motorista</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <Users size={20} color="#0284c7" />
+                <h2 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', margin: 0 }}>Novo Motorista</h2>
+              </div>
               <form onSubmit={cadastrarMotorista} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Nome Completo</label><input type="text" placeholder="Ex: João da Silva" value={nome} onChange={e => setNome(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
                 <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>CNH</label><input type="text" placeholder="Número da CNH" value={cnh} onChange={e => setCnh(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
@@ -422,7 +503,10 @@ export default function App() {
               </form>
             </div>
             <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><Truck size={18} color="#059669" /> Novo Veículo</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <Truck size={20} color="#059669" />
+                <h2 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', margin: 0 }}>Novo Veículo</h2>
+              </div>
               <form onSubmit={cadastrarVeiculo} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><input type="text" placeholder="ABC-1234" value={placa} onChange={e => setPlaca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
                 <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Modelo</label><input type="text" placeholder="Ex: Fiorino" value={modelo} onChange={e => setModelo(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>

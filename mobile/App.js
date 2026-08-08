@@ -4,7 +4,6 @@ import * as Location from 'expo-location';
 import { io } from 'socket.io-client';
 
 const API_URL = 'https://sunny-wear-sistema.onrender.com';
-const socket = io(API_URL);
 
 export default function App() {
   const [abaAtiva, setAbaAtiva] = useState('rastreio'); // 'rastreio' ou 'abastecimento'
@@ -15,23 +14,40 @@ export default function App() {
   const [localizacaoAtual, setLocalizacaoAtual] = useState(null);
   const [velocidadeAtual, setVelocidadeAtual] = useState(0);
   const [subscription, setSubscription] = useState(null);
+  const [socket, setSocket] = useState(null);
 
   // Estados de Abastecimento
   const [placaAbastecimento, setPlacaAbastecimento] = useState('ABC-1234');
   const [valorAbastecimento, setValorAbastecimento] = useState('');
 
+  // Inicializa o Socket.io e permissões ao abrir o app
   useEffect(() => {
+    const novoSocket = io(API_URL, {
+      transports: ['websocket'], // Força o uso de WebSocket para maior estabilidade
+    });
+    setSocket(novoSocket);
+
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permissão negada', 'Precisamos da permissão de localização para rastrear o veículo.');
       }
     })();
+
+    return () => {
+      novoSocket.disconnect();
+    };
   }, []);
 
   const iniciarRastreamento = async () => {
-    if (!placa) {
+    if (!placa.trim()) {
       Alert.alert('Atenção', 'Informe a placa do veículo antes de iniciar.');
+      return;
+    }
+
+    const { status } = await Location.getForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão negada', 'Ative a permissão de localização nas configurações do celular.');
       return;
     }
 
@@ -50,13 +66,16 @@ export default function App() {
         setLocalizacaoAtual({ latitude, longitude });
         setVelocidadeAtual(velocidadeKmH);
 
-        socket.emit('atualizar_localizacao', {
-          placa: placa.toUpperCase(),
-          latitude,
-          longitude,
-          velocidade: velocidadeKmH,
-          horario: new Date().toISOString()
-        });
+        // Envia a posição via WebSocket se estiver conectado
+        if (socket) {
+          socket.emit('atualizar_localizacao', {
+            placa: placa.trim().toUpperCase(),
+            latitude,
+            longitude,
+            velocidade: velocidadeKmH,
+            horario: new Date().toISOString()
+          });
+        }
       }
     );
 
@@ -74,8 +93,16 @@ export default function App() {
   };
 
   const registrarAbastecimento = async () => {
-    if (!placaAbastecimento || !valorAbastecimento) {
+    if (!placaAbastecimento.trim() || !valorAbastecimento.trim()) {
       Alert.alert('Erro', 'Preencha a placa e o valor do abastecimento.');
+      return;
+    }
+
+    const valorLimpo = String(valorAbastecimento).replace(',', '.');
+    const valorNumerico = parseFloat(valorLimpo);
+
+    if (isNaN(valorNumerico) || valorNumerico <= 0) {
+      Alert.alert('Valor Inválido', 'Insira um valor numérico válido e maior que zero.');
       return;
     }
 
@@ -84,8 +111,8 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          placa: placaAbastecimento, 
-          valor: parseFloat(valorAbastecimento) 
+          placa: placaAbastecimento.trim().toUpperCase(), 
+          valor: valorNumerico 
         })
       });
 
@@ -171,7 +198,6 @@ export default function App() {
             placeholder="0.00"
             value={valorAbastecimento}
             onChangeText={setValorAbastecimento}
-            keyboardDataType="numeric"
             keyboardType="numeric"
           />
 
@@ -238,7 +264,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 380,
     padding: 24,
-    borderRadius: 12,
+    borderRadius: '12px',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

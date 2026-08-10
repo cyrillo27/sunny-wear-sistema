@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Dimensions } from 'react-native';
 import { io } from 'socket.io-client';
-import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Bell, Wrench, LogOut } from 'lucide-react-native';
+import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Bell, Wrench, LogOut, Fuel } from 'lucide-react-native';
 
 const API_URL = 'https://sunny-wear-sistema.onrender.com';
 const socket = io(API_URL);
@@ -37,17 +37,21 @@ export default function App() {
   const [dataItinerario, setDataItinerario] = useState('');
   const [historicoItinerario, setHistoricoItinerario] = useState([]);
 
-  const [placaManutencao, setPlacaManutencao] = useState('');
-  const [tipoManutencao, setTipoManutencao] = useState('Combustível');
-  const [descricaoManutencao, setDescricaoManutencao] = useState('');
-  const [custoManutencao, setCustoManutencao] = useState('');
-  const [dataManutencao, setDataManutencao] = useState(new Date().toISOString().split('T')[0]);
-  const [manutencoesList, setManutencoesList] = useState([]);
+  // Estados para o Abastecimento / Custos pelo Mobile
+  const [placaAbastecimento, setPlacaAbastecimento] = useState('');
+  const [litrosAbastecimento, setLitrosAbastecimento] = useState('');
+  const [valorAbastecimento, setValorAbastecimento] = useState('');
+  const [quilometragem, setQuilometragem] = useState('');
+
+  // Estados de Rastreamento GPS ao vivo do motorista
+  const [placaRastreamento, setPlacaRastreamento] = useState('');
+  const [rastreando, setRastreando] = useState(false);
 
   const [filtroDataRelatorio, setFiltroDataRelatorio] = useState('');
   const [filtroMotoristaRelatorio, setFiltroMotoristaRelatorio] = useState('');
   const [stats, setStats] = useState({ total_motoristas: 0, total_veiculos: 0, total_jornadas: 0, total_alertas: 0, custo_total: 0 });
   const [alertasList, setAlertasList] = useState([]);
+  const [manutencoesList, setManutencoesList] = useState([]);
 
   useEffect(() => {
     if (!isLogged) return;
@@ -65,6 +69,32 @@ export default function App() {
       socket.off('novo_alerta');
     };
   }, [isLogged]);
+
+  // Simulação de envio de GPS ao vivo pelo motorista
+  useEffect(() => {
+    let intervalo = null;
+    if (rastreando && placaRastreamento) {
+      let lat = -23.5505 + (Math.random() - 0.5) * 0.02;
+      let lng = -46.6333 + (Math.random() - 0.5) * 0.02;
+
+      intervalo = setInterval(() => {
+        lat += (Math.random() - 0.5) * 0.001;
+        lng += (Math.random() - 0.5) * 0.001;
+        const velocidadeSimulada = Math.floor(Math.random() * 40) + 40;
+
+        socket.emit('atualizar_localizacao', {
+          placa: placaRastreamento,
+          latitude: lat,
+          longitude: lng,
+          velocidade: velocidadeSimulada,
+          horario: new Date().toISOString()
+        });
+      }, 3000);
+    } else {
+      clearInterval(intervalo);
+    }
+    return () => clearInterval(intervalo);
+  }, [rastreando, placaRastreamento]);
 
   const handleLogin = async () => {
     if (!usuarioLogin || !senhaLogin) {
@@ -94,6 +124,7 @@ export default function App() {
 
   const handleLogout = () => {
     setIsLogged(false);
+    setRastreando(false);
   };
 
   const carregarDados = async () => {
@@ -104,8 +135,9 @@ export default function App() {
       const resVei = await fetch(`${API_URL}/api/veiculos`);
       const veiData = await resVei.json();
       setVeiculosList(veiData);
-      if (veiData.length > 0 && !placaManutencao) {
-        setPlacaManutencao(veiData[0].placa);
+      if (veiData.length > 0) {
+        if (!placaAbastecimento) setPlacaAbastecimento(veiData[0].placa);
+        if (!placaRastreamento) setPlacaRastreamento(veiData[0].placa);
       }
 
       const resJor = await fetch(`${API_URL}/api/jornadas`);
@@ -136,45 +168,36 @@ export default function App() {
     } catch (e) { console.error(e); }
   };
 
-  const cadastrarMotorista = async () => {
-    if (!nome.trim() || !cnh.trim()) {
-      Alert.alert("Atenção", "Preencha o Nome e a CNH do motorista.");
+  const registrarAbastecimento = async () => {
+    if (!placaAbastecimento || !valorAbastecimento) {
+      Alert.alert("Atenção", "Preencha a placa e o valor total do abastecimento.");
       return;
     }
+
+    const custoNum = parseFloat(valorAbastecimento.replace(',', '.')) || 0;
+    const desc = `Abastecimento (${litrosAbastecimento || '0'} litros) - KM: ${quilometragem || 'N/A'}`;
+
     try {
-      const res = await fetch(`${API_URL}/api/motoristas`, {
+      const res = await fetch(`${API_URL}/api/manutencoes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: nome.trim(), cnh: cnh.trim(), telefone: telefone.trim() })
+        body: JSON.stringify({ 
+          placa: placaAbastecimento, 
+          tipo: 'Combustível', 
+          descricao: desc, 
+          custo: custoNum, 
+          data: new Date().toISOString().split('T')[0] 
+        })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.erro || "Erro ao cadastrar.");
-      
-      Alert.alert("Sucesso", data.mensagem);
-      setNome(''); setCnh(''); setTelefone('');
-      carregarDados(); carregarStats();
-    } catch (err) {
-      Alert.alert("Erro", err.message);
-    }
-  };
+      if (!res.ok) throw new Error(data.erro || "Erro ao registrar abastecimento.");
 
-  const cadastrarVeiculo = async () => {
-    if (!placa.trim() || !modelo.trim() || !marca.trim()) {
-      Alert.alert("Atenção", "Preencha todos os campos do veículo.");
-      return;
-    }
-    try {
-      const res = await fetch(`${API_URL}/api/veiculos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ placa: placa.trim().toUpperCase(), modelo: modelo.trim(), marca: marca.trim(), ano: parseInt(ano) || null })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.erro || "Erro ao cadastrar veículo.");
-
-      Alert.alert("Sucesso", data.mensagem);
-      setPlaca(''); setModelo(''); setMarca(''); setAno('');
-      carregarDados(); carregarStats();
+      Alert.alert("Sucesso", "Abastecimento registrado com sucesso!");
+      setLitrosAbastecimento('');
+      setValorAbastecimento('');
+      setQuilometragem('');
+      carregarManutencoes();
+      carregarStats();
     } catch (err) {
       Alert.alert("Erro", err.message);
     }
@@ -227,7 +250,7 @@ export default function App() {
             </View>
             <View>
               <Text style={styles.headerTitle}>☀️ Sunny Wear</Text>
-              <Text style={styles.headerSub}>Controle Logístico</Text>
+              <Text style={styles.headerSub}>Controle Logístico & Motorista</Text>
             </View>
           </View>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
@@ -238,9 +261,9 @@ export default function App() {
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.menuScroll}>
           <TouchableOpacity onPress={() => setAba('dashboard')} style={[styles.menuTab, aba === 'dashboard' && styles.menuTabActive]}><LayoutDashboard size={14} color="#fff"/><Text style={styles.menuText}>Início</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => setAba('cadastros')} style={[styles.menuTab, aba === 'cadastros' && styles.menuTabActive]}><PlusCircle size={14} color="#fff"/><Text style={styles.menuText}>Cadastros</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => setAba('abastecer')} style={[styles.menuTab, aba === 'abastecer' && styles.menuTabActive]}><Fuel size={14} color="#fff"/><Text style={styles.menuText}>Abastecer</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => setAba('gps')} style={[styles.menuTab, aba === 'gps' && styles.menuTabActive]}><MapPin size={14} color="#fff"/><Text style={styles.menuText}>Enviar GPS</Text></TouchableOpacity>
           <TouchableOpacity onPress={() => setAba('listas')} style={[styles.menuTab, aba === 'listas' && styles.menuTabActive]}><List size={14} color="#fff"/><Text style={styles.menuText}>Frota</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => setAba('manutencoes')} style={[styles.menuTab, aba === 'manutencoes' && styles.menuTabActive]}><Wrench size={14} color="#fff"/><Text style={styles.menuText}>Custos</Text></TouchableOpacity>
           <TouchableOpacity onPress={() => setAba('alertas')} style={[styles.menuTab, aba === 'alertas' && styles.menuTabActive]}><Bell size={14} color="#fff"/><Text style={styles.menuText}>Alertas</Text></TouchableOpacity>
         </ScrollView>
       </View>
@@ -261,18 +284,46 @@ export default function App() {
           </View>
         )}
 
-        {aba === 'cadastros' && (
-          <View>
-            <Text style={styles.sectionTitle}>Novo Motorista</Text>
-            <View style={styles.card}>
-              <Text style={styles.label}>Nome Completo</Text>
-              <TextInput style={styles.inputMobile} placeholder="Ex: João da Silva" value={nome} onChangeText={setNome} />
-              <Text style={styles.label}>CNH</Text>
-              <TextInput style={styles.inputMobile} placeholder="12345678901" keyboardType="numeric" value={cnh} onChangeText={setCnh} />
-              <Text style={styles.label}>Telefone</Text>
-              <TextInput style={styles.inputMobile} placeholder="(11) 99999-9999" keyboardType="phone-pad" value={telefone} onChangeText={setTelefone} />
-              <TouchableOpacity style={styles.primaryButton} onPress={cadastrarMotorista}><Text style={styles.buttonText}>Salvar Motorista</Text></TouchableOpacity>
-            </View>
+        {aba === 'abastecer' && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>⛽ Registrar Abastecimento</Text>
+            
+            <Text style={styles.label}>Veículo (Placa)</Text>
+            <TextInput style={styles.inputMobile} placeholder="ABC-1234" value={placaAbastecimento} onChangeText={setPlacaAbastecimento} />
+            
+            <Text style={styles.label}>Litros Abastecidos</Text>
+            <TextInput style={styles.inputMobile} placeholder="Ex: 45.5" keyboardType="numeric" value={litrosAbastecimento} onChangeText={setLitrosAbastecimento} />
+            
+            <Text style={styles.label}>Valor Total (R$)</Text>
+            <TextInput style={styles.inputMobile} placeholder="Ex: 250.00" keyboardType="numeric" value={valorAbastecimento} onChangeText={setValorAbastecimento} />
+
+            <Text style={styles.label}>Quilometragem Atual (KM)</Text>
+            <TextInput style={styles.inputMobile} placeholder="Ex: 45200" keyboardType="numeric" value={quilometragem} onChangeText={setQuilometragem} />
+
+            <TouchableOpacity style={styles.primaryButton} onPress={registrarAbastecimento}><Text style={styles.buttonText}>Enviar Abastecimento</Text></TouchableOpacity>
+          </View>
+        )}
+
+        {aba === 'gps' && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>📍 Enviar Localização (GPS)</Text>
+            <Text style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>Ative o envio para simular o rastreamento em tempo real do seu veículo para o painel web.</Text>
+
+            <Text style={styles.label}>Placa do Veículo em Operação</Text>
+            <TextInput style={styles.inputMobile} placeholder="ABC-1234" value={placaRastreamento} onChangeText={setPlacaRastreamento} />
+
+            <TouchableOpacity 
+              style={[styles.primaryButton, { backgroundColor: rastreando ? '#dc2626' : '#16a34a', marginTop: 10 }]} 
+              onPress={() => setRastreando(!rastreando)}
+            >
+              <Text style={styles.buttonText}>{rastreando ? '⏹️ Parar Transmissão GPS' : '▶️ Iniciar Transmissão GPS'}</Text>
+            </TouchableOpacity>
+
+            {rastreando && (
+              <View style={{ marginTop: 16, padding: 12, backgroundColor: '#f0fdf4', borderRadius: 8, borderWidth: 1, borderColor: '#bbf7d0', alignItems: 'center' }}>
+                <Text style={{ color: '#16a34a', fontWeight: 'bold' }}>📡 Transmitindo localização ao vivo...</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -283,18 +334,6 @@ export default function App() {
               <View key={v.id} style={styles.listItem}>
                 <Text style={styles.listTitle}>{v.modelo} ({v.marca})</Text>
                 <Text style={styles.listSub}>Placa: {v.placa}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {aba === 'manutencoes' && (
-          <View>
-            <Text style={styles.sectionTitle}>Histórico de Custos</Text>
-            {manutencoesList.map(m => (
-              <View key={m.id} style={styles.listItem}>
-                <Text style={styles.listTitle}>{m.tipo} - {m.placa}</Text>
-                <Text style={styles.listSub}>{m.descricao} | R$ {Number(m.custo || 0).toFixed(2)}</Text>
               </View>
             ))}
           </View>

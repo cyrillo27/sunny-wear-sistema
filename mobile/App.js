@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Dimensions } from 'react-native';
 import { io } from 'socket.io-client';
-import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Bell, Wrench, LogOut, Fuel } from 'lucide-react-native';
+import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Wrench, LogOut, Fuel } from 'lucide-react-native';
 
 const API_URL = 'https://sunny-wear-sistema.onrender.com';
 const socket = io(API_URL);
@@ -12,31 +12,10 @@ export default function App() {
   const [senhaLogin, setSenhaLogin] = useState('');
   const [aba, setAba] = useState('dashboard');
 
-  const [nome, setNome] = useState('');
-  const [cnh, setCnh] = useState('');
-  const [telefone, setTelefone] = useState('');
-
-  const [placa, setPlaca] = useState('');
-  const [modelo, setModelo] = useState('');
-  const [marca, setMarca] = useState('');
-  const [ano, setAno] = useState('');
-
   const [motoristasList, setMotoristasList] = useState([]);
   const [veiculosList, setVeiculosList] = useState([]);
   const [jornadasList, setJornadasList] = useState([]);
   
-  const [motoristaSelecionado, setMotoristaSelecionado] = useState('');
-  const [veiculoSelecionado, setVeiculoSelecionado] = useState('');
-  const [dataIniciada, setDataIniciada] = useState('');
-
-  const [buscaPlaca, setBuscaPlaca] = useState('');
-  const [buscaData, setBuscaData] = useState('');
-  const [resultadoMulta, setResultadoMulta] = useState([]);
-
-  const [placaItinerario, setPlacaItinerario] = useState('');
-  const [dataItinerario, setDataItinerario] = useState('');
-  const [historicoItinerario, setHistoricoItinerario] = useState([]);
-
   // Estados para o Abastecimento / Custos pelo Mobile
   const [placaAbastecimento, setPlacaAbastecimento] = useState('');
   const [litrosAbastecimento, setLitrosAbastecimento] = useState('');
@@ -47,27 +26,14 @@ export default function App() {
   const [placaRastreamento, setPlacaRastreamento] = useState('');
   const [rastreando, setRastreando] = useState(false);
 
-  const [filtroDataRelatorio, setFiltroDataRelatorio] = useState('');
-  const [filtroMotoristaRelatorio, setFiltroMotoristaRelatorio] = useState('');
   const [stats, setStats] = useState({ total_motoristas: 0, total_veiculos: 0, total_jornadas: 0, total_alertas: 0, custo_total: 0 });
-  const [alertasList, setAlertasList] = useState([]);
   const [manutencoesList, setManutencoesList] = useState([]);
 
   useEffect(() => {
     if (!isLogged) return;
     carregarDados();
     carregarStats();
-    carregarAlertas();
     carregarManutencoes();
-
-    socket.on('novo_alerta', (alerta) => {
-      setAlertasList(prev => [alerta, ...prev]);
-      carregarStats();
-    });
-
-    return () => {
-      socket.off('novo_alerta');
-    };
   }, [isLogged]);
 
   // Simulação de envio de GPS ao vivo pelo motorista
@@ -151,13 +117,6 @@ export default function App() {
     try {
       const res = await fetch(`${API_URL}/api/dashboard/stats`);
       setStats(await res.json());
-    } catch (e) { console.error(e); }
-  };
-
-  const carregarAlertas = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/alertas`);
-      setAlertasList(await res.json());
     } catch (e) { console.error(e); }
   };
 
@@ -264,7 +223,6 @@ export default function App() {
           <TouchableOpacity onPress={() => setAba('abastecer')} style={[styles.menuTab, aba === 'abastecer' && styles.menuTabActive]}><Fuel size={14} color="#fff"/><Text style={styles.menuText}>Abastecer</Text></TouchableOpacity>
           <TouchableOpacity onPress={() => setAba('gps')} style={[styles.menuTab, aba === 'gps' && styles.menuTabActive]}><MapPin size={14} color="#fff"/><Text style={styles.menuText}>Enviar GPS</Text></TouchableOpacity>
           <TouchableOpacity onPress={() => setAba('listas')} style={[styles.menuTab, aba === 'listas' && styles.menuTabActive]}><List size={14} color="#fff"/><Text style={styles.menuText}>Frota</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => setAba('alertas')} style={[styles.menuTab, aba === 'alertas' && styles.menuTabActive]}><Bell size={14} color="#fff"/><Text style={styles.menuText}>Alertas</Text></TouchableOpacity>
         </ScrollView>
       </View>
 
@@ -336,20 +294,6 @@ export default function App() {
                 <Text style={styles.listSub}>Placa: {v.placa}</Text>
               </View>
             ))}
-          </View>
-        )}
-
-        {aba === 'alertas' && (
-          <View>
-            <Text style={styles.sectionTitle}>Alertas Recentes</Text>
-            {alertasList.length === 0 ? <Text style={{ color: '#64748b' }}>Nenhum alerta registrado.</Text> : 
-              alertasList.map((a, i) => (
-                <View key={i} style={[styles.listItem, { borderLeftColor: '#dc2626', borderLeftWidth: 4 }]}>
-                  <Text style={{ fontWeight: 'bold', color: '#991b1b' }}>{a.mensagem}</Text>
-                  <Text style={{ fontSize: 12, color: '#7f1d1d' }}>Placa: {a.placa}</Text>
-                </View>
-              ))
-            }
           </View>
         )}
       </ScrollView>

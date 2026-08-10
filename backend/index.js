@@ -183,7 +183,6 @@ app.post('/api/jornadas', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// Rota para apagar um vínculo (jornada/turno)
 app.delete('/api/jornadas/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM jornadas WHERE id = $1', [req.params.id]);
@@ -380,6 +379,9 @@ io.on('connection', (socket) => {
 
   socket.on('atualizar_localizacao', async (dados) => {
     const { placa, latitude, longitude, velocidade, horario } = dados;
+    if (!placa) return;
+
+    const placaMaiuscula = placa.toUpperCase();
     const rua = "Av. Paulista, 1000"; 
     const bairro = "Bela Vista";
     const cidade = "São Paulo";
@@ -387,19 +389,26 @@ io.on('connection', (socket) => {
     try {
       await pool.query(
         'INSERT INTO posicoes (placa, latitude, longitude, velocidade, rua, bairro, cidade, horario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-        [placa.toUpperCase(), latitude, longitude, velocidade, rua, bairro, cidade, horario]
+        [placaMaiuscula, latitude, longitude, velocidade, rua, bairro, cidade, horario]
       );
 
       if (velocidade > 80) {
-        const mensagemAlerta = `Veículo ${placa.toUpperCase()} ultrapassou o limite de velocidade (${velocidade} km/h)`;
+        const mensagemAlerta = `Veículo ${placaMaiuscula} ultrapassou o limite de velocidade (${velocidade} km/h)`;
         const alertaRes = await pool.query(
           'INSERT INTO alertas (placa, mensagem, horario) VALUES ($1, $2, $3) RETURNING *',
-          [placa.toUpperCase(), mensagemAlerta, horario]
+          [placaMaiuscula, mensagemAlerta, horario]
         );
         io.emit('novo_alerta', alertaRes.rows[0]);
       }
 
-      io.emit('posicao_motorista', { placa: placa.toUpperCase(), latitude, longitude, velocidade, rua, horario });
+      io.emit('posicao_motorista', { 
+        placa: placaMaiuscula, 
+        latitude, 
+        longitude, 
+        velocidade, 
+        rua, 
+        horario 
+      });
     } catch (err) {
       console.error("Erro ao processar posição:", err);
     }

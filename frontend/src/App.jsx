@@ -411,6 +411,12 @@ export default function App() {
       lng += (Math.random() - 0.5) * 0.002;
       const velocidadeSimulada = Math.floor(Math.random() * 40) + 50; 
 
+      // ATUALIZA O ESTADO LOCAL PARA O MARCADOR SE MOVER NA TELA NA HORA
+      setPosicoesAoVivo(prev => ({
+        ...prev,
+        [placaVeiculo]: { placa: placaVeiculo, latitude: lat, longitude: lng, velocidade: velocidadeSimulada }
+      }));
+
       socket.emit('atualizar_localizacao', {
         placa: placaVeiculo, latitude: lat, longitude: lng, velocidade: velocidadeSimulada, horario: new Date().toISOString()
       });

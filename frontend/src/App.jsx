@@ -67,21 +67,18 @@ export default function App() {
   const [dadosGraficoTurnos, setDadosGraficoTurnos] = useState([]);
   const [posicoesAoVivo, setPosicoesAoVivo] = useState({});
 
-  // MÁSCARAS E VALIDADORES INTELIGENTES
+  // VALIDADORES E MÁSCARAS
   const handleNomeChange = (e) => {
-    // Permite apenas letras e espaços
     const apenasLetras = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
     setNome(apenasLetras);
   };
 
   const handleCnhChange = (e) => {
-    // Permite apenas números e limita a 11 dígitos
     const apenasNumeros = e.target.value.replace(/\D/g, '').slice(0, 11);
     setCnh(apenasNumeros);
   };
 
   const handleTelefoneChange = (e) => {
-    // Formata automaticamente para (XX) XXXXX-XXXX
     let valor = e.target.value.replace(/\D/g, '').slice(0, 11);
     if (valor.length > 6) {
       valor = `(${valor.slice(0, 2)}) ${valor.slice(2, 7)}-${valor.slice(7)}`;
@@ -94,7 +91,6 @@ export default function App() {
   };
 
   const handlePlacaChange = (e) => {
-    // Formata para o padrão de placa ABC-1234 (ou Mercosul ABC1D23)
     let valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
     if (valor.length > 3) {
       valor = `${valor.slice(0, 3)}-${valor.slice(3)}`;
@@ -263,6 +259,10 @@ export default function App() {
     e.preventDefault();
     if (!placa.trim() || !modelo.trim() || !marca.trim()) {
       alert("Preencha todos os campos obrigatórios do veículo.");
+      return;
+    }
+    if (placa.length < 8) {
+      alert("A placa deve estar no formato correto (Ex: ABC-1234).");
       return;
     }
 

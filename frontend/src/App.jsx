@@ -67,7 +67,6 @@ export default function App() {
   const [dadosGraficoTurnos, setDadosGraficoTurnos] = useState([]);
   const [posicoesAoVivo, setPosicoesAoVivo] = useState({});
 
-  // VALIDADORES E MÁSCARAS
   const handleNomeChange = (e) => {
     const apenasLetras = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
     setNome(apenasLetras);

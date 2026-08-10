@@ -183,6 +183,14 @@ app.post('/api/jornadas', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
+// Rota para apagar um vínculo (jornada/turno)
+app.delete('/api/jornadas/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM jornadas WHERE id = $1', [req.params.id]);
+    res.json({ mensagem: 'Vínculo removido com sucesso!' });
+  } catch (err) { res.status(500).json({ erro: err.message }); }
+});
+
 // ==================== ROTAS DE MANUTENÇÕES / CUSTOS ====================
 app.get('/api/manutencoes', async (req, res) => {
   try {

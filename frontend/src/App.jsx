@@ -292,6 +292,16 @@ export default function App() {
     }
   };
 
+  const deletarJornada = async (id) => {
+    if (!confirm("Deseja realmente remover este vínculo/turno?")) return;
+    try {
+      await fetch(`${API_URL}/api/jornadas/${id}`, { method: 'DELETE' });
+      carregarDados(); carregarStats(); carregarGraficos();
+    } catch (err) {
+      alert("Erro ao excluir o vínculo.");
+    }
+  };
+
   const cadastrarManutencao = async (e) => {
     e.preventDefault();
     const placaSelecionada = placaManutencao || (veiculosList.length > 0 ? veiculosList[0].placa : '');
@@ -418,7 +428,7 @@ export default function App() {
 
   if (!isLogged) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '16px', width: '100vw', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '16px', width: '100%', boxSizing: 'border-box' }}>
         <form onSubmit={handleLogin} style={{ background: '#1e293b', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '360px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid #334155', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ background: '#0284c7', width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}><Truck size={28} color="#fff" /></div>
@@ -440,7 +450,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '20px', background: '#f1f5f9', minHeight: '100vh', width: '100vw', color: '#1e293b', boxSizing: 'border-box', overflowX: 'hidden' }}>
+    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '20px', background: '#f1f5f9', minHeight: '100vh', width: '100%', maxWidth: '1440px', margin: '0 auto', color: '#1e293b', boxSizing: 'border-box' }}>
       <header style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '20px 24px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -479,7 +489,7 @@ export default function App() {
               <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Indicadores, estatísticas rápidas e gráficos analíticos em tempo real.</p>
             </div>
 
-            {/* SEÇÃO DE TURNOS ATIVOS (VÍNCULOS RECENTES) */}
+            {/* SEÇÃO DE TURNOS ATIVOS */}
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px', boxSizing: 'border-box' }}>
               <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <LinkIcon size={18} color="#7c3aed" /> Vínculos Ativos na Frota (Motorista com Veículo)
@@ -537,7 +547,7 @@ export default function App() {
                 )}
               </div>
 
-              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box' }}>
+              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box', overflow: 'hidden' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '16px', width: '100%', textAlign: 'left' }}>🍩 Distribuição de Turnos por Motorista</h3>
                 {dadosGraficoTurnos.length === 0 ? (
                   <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum turno registrado.</p>
@@ -551,7 +561,8 @@ export default function App() {
                           nameKey="motorista" 
                           cx="50%" 
                           cy="50%" 
-                          outerRadius={90} 
+                          outerRadius={80} 
+                          innerRadius={40}
                           label
                         >
                           {dadosGraficoTurnos.map((entry, index) => (
@@ -671,10 +682,13 @@ export default function App() {
             {jornadasList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhum turno registrado ainda.</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {jornadasList.map(j => (
-                  <div key={j.id} style={{ background: '#f8fafc', padding: '14px', borderLeft: '4px solid #7c3aed', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                    <p style={{ margin: '0 0 4px 0', fontSize: '14px' }}>👤 <strong>Motorista:</strong> {j.motorista_nome}</p>
-                    <p style={{ margin: '0 0 4px 0', fontSize: '14px' }}>🚗 <strong>Veículo:</strong> {j.veiculo_modelo} (Placa: <code style={{ background: '#cbd5e1', padding: '2px 4px', borderRadius: '4px', fontWeight: 'bold' }}>{j.placa}</code>)</p>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>🕒 <strong>Início:</strong> {j.data_inicio}</p>
+                  <div key={j.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '14px', borderLeft: '4px solid #7c3aed', borderRadius: '6px', border: '1px solid #e2e8f0', gap: '8px' }}>
+                    <div style={{ overflow: 'hidden' }}>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '14px' }}>👤 <strong>Motorista:</strong> {j.motorista_nome}</p>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '14px' }}>🚗 <strong>Veículo:</strong> {j.veiculo_modelo} (Placa: <code style={{ background: '#cbd5e1', padding: '2px 4px', borderRadius: '4px', fontWeight: 'bold' }}>{j.placa}</code>)</p>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>🕒 <strong>Início:</strong> {j.data_inicio}</p>
+                    </div>
+                    <button onClick={() => deletarJornada(j.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }} title="Apagar Vínculo"><Trash2 size={16} /></button>
                   </div>
                 ))}
               </div>

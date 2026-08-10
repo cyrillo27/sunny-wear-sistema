@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Bell, Wrench, LogOut } from 'lucide-react';
+import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Wrench, LogOut } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -418,7 +418,7 @@ export default function App() {
 
   if (!isLogged) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '16px', width: '100vw', boxSizing: 'border-box' }}>
         <form onSubmit={handleLogin} style={{ background: '#1e293b', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '360px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid #334155', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ background: '#0284c7', width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}><Truck size={28} color="#fff" /></div>
@@ -440,8 +440,8 @@ export default function App() {
   }
 
   return (
-    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '16px', background: '#f1f5f9', minHeight: '100vh', color: '#1e293b', boxSizing: 'border-box' }}>
-      <header style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '20px', background: '#f1f5f9', minHeight: '100vh', width: '100vw', color: '#1e293b', boxSizing: 'border-box', overflowX: 'hidden' }}>
+      <header style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '20px 24px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ background: '#0284c7', padding: '10px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -467,19 +467,45 @@ export default function App() {
           <button onClick={() => setAba('multas')} style={getTabStyle('multas')}><ShieldAlert size={15} /> Multas</button>
           <button onClick={() => setAba('manutencoes')} style={getTabStyle('manutencoes')}><Wrench size={15} /> Custos</button>
           <button onClick={() => setAba('aovivo')} style={getTabStyle('aovivo')}><MapPin size={15} /> Ao Vivo</button>
-          <button onClick={() => setAba('alertas')} style={getTabStyle('alertas')}><Bell size={15} /> Alertas {alertasList.length > 0 && `(${alertasList.length})`}</button>
           <button onClick={() => setAba('relatorios')} style={getTabStyle('relatorios')}><FileDown size={15} /> Relatórios</button>
         </div>
       </header>
 
-      <main style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', boxSizing: 'border-box' }}>
+      <main style={{ width: '100%', boxSizing: 'border-box' }}>
         {aba === 'dashboard' && (
           <div>
             <div style={{ marginBottom: '24px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#0f172a', margin: '0 0 4px 0' }}>Visão Geral da Frota</h2>
               <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Indicadores, estatísticas rápidas e gráficos analíticos em tempo real.</p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+
+            {/* SEÇÃO DE TURNOS ATIVOS (VÍNCULOS RECENTES) */}
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px', boxSizing: 'border-box' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LinkIcon size={18} color="#7c3aed" /> Vínculos Ativos na Frota (Motorista com Veículo)
+              </h3>
+              {jornadasList.length === 0 ? (
+                <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>Nenhum motorista vinculado a veículo no momento.</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+                  {jornadasList.map((j) => (
+                    <div key={j.id} style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', borderLeft: '4px solid #7c3aed' }}>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#1e293b' }}>
+                        👤 <strong>{j.motorista_nome}</strong>
+                      </p>
+                      <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#475569' }}>
+                        🚗 com a <strong>{j.veiculo_modelo}</strong> (<code style={{ background: '#cbd5e1', padding: '2px 4px', borderRadius: '4px', fontWeight: 'bold' }}>{j.placa}</code>)
+                      </p>
+                      <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>
+                        🕒 Início: {j.data_inicio}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px', width: '100%' }}>
               <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ background: '#e0f2fe', color: '#0284c7', padding: '12px', borderRadius: '10px' }}><Truck size={22} /></div>
                 <div><p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículos</p><h3 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>{stats.total_veiculos}</h3></div>
@@ -492,17 +518,13 @@ export default function App() {
                 <div style={{ background: '#fef3c7', color: '#d97706', padding: '12px', borderRadius: '10px' }}><Wrench size={22} /></div>
                 <div><p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo Total</p><h3 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#0f172a' }}>R$ {Number(stats.custo_total || 0).toFixed(2)}</h3></div>
               </div>
-              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px', borderRadius: '10px' }}><Bell size={22} /></div>
-                <div><p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Alertas</p><h3 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#dc2626' }}>{alertasList.length}</h3></div>
-              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '28px' }}>
-              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '16px' }}>📊 Alertas de Excesso de Velocidade</h3>
-                {dadosGraficoAlertas.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum dado registrado.</p> : (
-                  <div style={{ width: '100%', height: '260px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px', marginBottom: '28px', width: '100%' }}>
+              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '16px' }}>📊 Alertas de Excesso de Velocidade por Veículo</h3>
+                {dadosGraficoAlertas.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum dado de alerta registrado.</p> : (
+                  <div style={{ width: '100%', height: '300px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={dadosGraficoAlertas}>
                         <XAxis dataKey="placa" stroke="#64748b" fontSize={12} />
@@ -515,12 +537,12 @@ export default function App() {
                 )}
               </div>
 
-              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '16px', width: '100%', textAlign: 'left' }}>🍩 Distribuição de Turnos</h3>
+              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '16px', width: '100%', textAlign: 'left' }}>🍩 Distribuição de Turnos por Motorista</h3>
                 {dadosGraficoTurnos.length === 0 ? (
                   <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum turno registrado.</p>
                 ) : (
-                  <div style={{ width: '100%', height: '260px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <div style={{ width: '100%', height: '300px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie 
@@ -529,7 +551,7 @@ export default function App() {
                           nameKey="motorista" 
                           cx="50%" 
                           cy="50%" 
-                          outerRadius={75} 
+                          outerRadius={90} 
                           label
                         >
                           {dadosGraficoTurnos.map((entry, index) => (
@@ -548,7 +570,7 @@ export default function App() {
         )}
 
         {aba === 'cadastros' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', width: '100%' }}>
             <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                 <Users size={20} color="#0284c7" />
@@ -585,11 +607,11 @@ export default function App() {
                   <input type="text" placeholder="Ex: Fiorino" value={modelo} onChange={e => setModelo(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                 </div>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <div style={{ flex: '1 1 140px' }}>
+                  <div style={{ flex: '1 1 150px' }}>
                     <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Marca</label>
                     <input type="text" placeholder="Fiat" value={marca} onChange={e => setMarca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                   </div>
-                  <div style={{ flex: '1 1 90px' }}>
+                  <div style={{ flex: '1 1 100px' }}>
                     <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Ano</label>
                     <input type="number" placeholder="2023" value={ano} onChange={e => setAno(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                   </div>
@@ -601,14 +623,14 @@ export default function App() {
         )}
 
         {aba === 'listas' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', width: '100%' }}>
             <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
-              <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Motoristas ({motoristasList.length})</h3>
+              <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Motoristas Cadastrados ({motoristasList.length})</h3>
               {motoristasList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhum motorista cadastrado.</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {motoristasList.map(m => (
                     <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '8px' }}>
-                      <div style={{ overflow: 'hidden' }}><strong style={{ fontSize: '14px', color: '#1e293b' }}>{m.nome}</strong><p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b' }}>CNH: {m.cnh} | Tel: {m.telefone || 'N/A'}</p></div>
+                      <div style={{ overflow: 'hidden' }}><strong style={{ fontSize: '14px', color: '#1e293b' }}>{m.nome}</strong><p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b' }}>CNH: {m.cnh} | Tel: {m.telefone || 'Não informado'}</p></div>
                       <button onClick={() => deletarMotorista(m.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }}><Trash2 size={16} /></button>
                     </div>
                   ))}
@@ -616,7 +638,7 @@ export default function App() {
               )}
             </div>
             <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
-              <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Veículos ({veiculosList.length})</h3>
+              <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Veículos Cadastrados ({veiculosList.length})</h3>
               {veiculosList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhum veículo cadastrado.</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {veiculosList.map(v => (
@@ -632,11 +654,11 @@ export default function App() {
         )}
 
         {aba === 'jornadas' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '540px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fff', padding: '28px', borderRadius: '12px', width: '100%', maxWidth: '600px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><LinkIcon size={18} color="#7c3aed" /> Vincular Motorista ao Veículo</h2>
             <form onSubmit={criarJornada} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Motorista</label><select value={motoristaSelecionado} onChange={e => setMotoristaSelecionado(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione --</option>{motoristasList.map(m => <option key={m.id} value={m.id}>{m.nome} (CNH: {m.cnh})</option>)}</select></div>
-              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículo</label><select value={veiculoSelecionado} onChange={e => setVeiculoSelecionado(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione --</option>{veiculosList.map(v => <option key={v.id} value={v.id}>{v.modelo} - Placa: {v.placa}</option>)}</select></div>
+              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Motorista</label><select value={motoristaSelecionado} onChange={e => setMotoristaSelecionado(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione o Motorista --</option>{motoristasList.map(m => <option key={m.id} value={m.id}>{m.nome} (CNH: {m.cnh})</option>)}</select></div>
+              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículo</label><select value={veiculoSelecionado} onChange={e => setVeiculoSelecionado(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione o Veículo --</option>{veiculosList.map(v => <option key={v.id} value={v.id}>{v.modelo} - Placa: {v.placa}</option>)}</select></div>
               <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Início da Jornada</label><input type="datetime-local" value={dataIniciada} onChange={e => setDataIniciada(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
               <button type="submit" style={{ background: '#7c3aed', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Registrar Vínculo</button>
             </form>
@@ -644,7 +666,7 @@ export default function App() {
         )}
 
         {aba === 'historico' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '700px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '800px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><History size={18} color="#7c3aed" /> Histórico de Turnos Registrados</h2>
             {jornadasList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhum turno registrado ainda.</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -661,16 +683,16 @@ export default function App() {
         )}
 
         {aba === 'manutencoes' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', width: '100%' }}>
             <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
               <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><Wrench size={18} color="#d97706" /> Registrar Custo ou Manutenção</h2>
               <form onSubmit={cadastrarManutencao} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículo (Placa)</label><select value={placaManutencao} onChange={e => setPlacaManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione --</option>{veiculosList.map(v => <option key={v.id} value={v.placa}>{v.modelo} ({v.placa})</option>)}</select></div>
+                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículo (Placa)</label><select value={placaManutencao} onChange={e => setPlacaManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione o Veículo --</option>{veiculosList.map(v => <option key={v.id} value={v.placa}>{v.modelo} ({v.placa})</option>)}</select></div>
                 <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Tipo de Custo</label><select value={tipoManutencao} onChange={e => setTipoManutencao(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="Combustível">⛽ Combustível</option><option value="Revisão Preventiva">🔧 Revisão Preventiva</option><option value="Manutenção Corretiva">🛠️ Manutenção Corretiva</option><option value="Outros">📦 Outros</option></select></div>
                 <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Descrição</label><input type="text" placeholder="Ex: Troca de óleo" value={descricaoManutencao} onChange={e => setDescricaoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <div style={{ flex: '1 1 140px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo (R$)</label><input type="text" placeholder="150.50" value={custoManutencao} onChange={e => setCustoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
-                  <div style={{ flex: '1 1 140px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataManutencao} onChange={e => setDataManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
+                  <div style={{ flex: '1 1 150px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo (R$)</label><input type="text" placeholder="150.50 ou 150,50" value={custoManutencao} onChange={e => setCustoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
+                  <div style={{ flex: '1 1 150px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataManutencao} onChange={e => setDataManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
                 </div>
                 <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Salvar Custo</button>
               </form>
@@ -696,11 +718,11 @@ export default function App() {
         )}
 
         {aba === 'itinerario' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '750px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '900px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '6px' }}><Navigation size={18} color="#0284c7" /> Histórico de Ruas por Data</h2>
             <form onSubmit={buscarItinerario} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '12px' }}>
-              <div style={{ flex: '1 1 200px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><select value={placaItinerario} onChange={e => setPlacaItinerario(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Escolha --</option>{veiculosList.map(v => <option key={v.id} value={v.placa}>{v.modelo} ({v.placa})</option>)}</select></div>
-              <div style={{ flex: '1 1 160px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataItinerario} onChange={e => setDataItinerario(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
+              <div style={{ flex: '1 1 220px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><select value={placaItinerario} onChange={e => setPlacaItinerario(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Escolha --</option>{veiculosList.map(v => <option key={v.id} value={v.placa}>{v.modelo} ({v.placa})</option>)}</select></div>
+              <div style={{ flex: '1 1 180px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataItinerario} onChange={e => setDataItinerario(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
               <button type="submit" style={{ background: '#0284c7', color: '#fff', padding: '10px 20px', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Consultar</button>
             </form>
             <div style={{ marginTop: '24px' }}>
@@ -719,11 +741,11 @@ export default function App() {
         )}
 
         {aba === 'multas' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '700px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '800px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><ShieldAlert size={18} color="#dc2626" /> Consultar Condutor por Multa</h2>
             <form onSubmit={consultarMulta} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 180px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><input type="text" placeholder="Ex: ABC-1234" value={buscaPlaca} onChange={e => setBuscaPlaca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
-              <div style={{ flex: '1 1 200px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data/Hora</label><input type="datetime-local" value={buscaData} onChange={e => setBuscaData(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
+              <div style={{ flex: '1 1 200px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><input type="text" placeholder="Ex: ABC-1234" value={buscaPlaca} onChange={e => setBuscaPlaca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
+              <div style={{ flex: '1 1 220px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data/Hora</label><input type="datetime-local" value={buscaData} onChange={e => setBuscaData(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
               <button type="submit" style={{ background: '#dc2626', color: '#fff', padding: '10px 20px', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Buscar</button>
             </form>
             <div style={{ marginTop: '20px' }}>
@@ -741,9 +763,9 @@ export default function App() {
         )}
 
         {aba === 'aovivo' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '900px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '100%', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}><MapPin size={18} color="#0284c7" /> Monitoramento ao Vivo</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', width: '100%' }}>
               {veiculosList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Cadastre veículos primeiro.</p> : (
                 veiculosList.map(v => (
                   <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', borderRadius: '6px', border: '1px solid #e2e8f0', gap: '8px', flexWrap: 'wrap' }}>
@@ -753,7 +775,7 @@ export default function App() {
                 ))
               )}
             </div>
-            <div style={{ height: '400px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+            <div style={{ height: '500px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
               <MapContainer center={[-23.5505, -46.6333]} zoom={12} style={{ height: '100%', width: '100%' }}>
                 <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 {Object.values(posicoesAoVivo).map((p, idx) => (
@@ -766,24 +788,8 @@ export default function App() {
           </div>
         )}
 
-        {aba === 'alertas' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '800px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
-            <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: '700', marginBottom: '6px' }}><Bell size={20} color="#dc2626" /> Alertas de Excesso de Velocidade</h2>
-            {alertasList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum alerta registrado.</p> : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {alertasList.map((alerta, idx) => (
-                  <div key={idx} style={{ background: '#fef2f2', borderLeft: '4px solid #dc2626', padding: '14px', borderRadius: '6px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <div><p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: '#991b1b' }}>{alerta.mensagem}</p><p style={{ margin: 0, fontSize: '12px', color: '#7f1d1d' }}>{new Date(alerta.horario).toLocaleString()}</p></div>
-                    <div><code style={{ background: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>{alerta.placa}</code></div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {aba === 'relatorios' && (
-          <div style={{ background: '#fff', padding: '32px', borderRadius: '12px', maxWidth: '650px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fff', padding: '32px', borderRadius: '12px', width: '100%', maxWidth: '700px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ background: '#e0f2fe', color: '#0284c7', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}><FileDown size={32} /></div>
               <h2 style={{ color: '#0f172a', fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>Exportar Relatório</h2>

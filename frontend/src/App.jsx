@@ -104,13 +104,32 @@ export default function App() {
     carregarManutencoes();
   }, [aba, isLogged]);
 
-  const handleLogin = (e) => {
+  // LOGIN SEGURO VIA BACKEND
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (usuarioLogin === 'sunnyadm' && senhaLogin === 'sunny@137') {
-      localStorage.setItem('isAdminLoggedIn', 'true');
-      setIsLogged(true);
-    } else {
-      alert('Usuário ou senha incorretos!');
+    if (!usuarioLogin || !senhaLogin) {
+      alert('Por favor, preencha o usuário e a senha.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: usuarioLogin, senha: senhaLogin })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.autenticado) {
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        setIsLogged(true);
+        setSenhaLogin('');
+      } else {
+        alert(data.erro || 'Usuário ou senha incorretos!');
+      }
+    } catch (err) {
+      alert('Erro de conexão com o servidor ao tentar fazer login.');
     }
   };
 

@@ -26,7 +26,6 @@ const pool = new Pool({
 const converterValorDecimal = (valor) => {
   if (typeof valor === 'number') return valor;
   if (!valor) return 0;
-  // Substitui vírgula por ponto caso venha no formato brasileiro (ex: 150,50 -> 150.50)
   const valorTratado = String(valor).replace(',', '.');
   return parseFloat(valorTratado) || 0;
 };
@@ -91,6 +90,20 @@ async function criarTabelas() {
   }
 }
 criarTabelas();
+
+// ==================== ROTA DE AUTENTICAÇÃO (LOGIN SEGURO) ====================
+app.post('/api/login', (req, res) => {
+  const { usuario, senha } = req.body;
+
+  const ADMIN_USER = 'sunnyadm';
+  const ADMIN_PASS = 'sunny@137';
+
+  if (usuario === ADMIN_USER && senha === ADMIN_PASS) {
+    res.json({ autenticado: true, mensagem: 'Login realizado com sucesso!' });
+  } else {
+    res.status(401).json({ autenticado: false, erro: 'Usuário ou senha incorretos!' });
+  }
+});
 
 // ==================== ROTAS DE MOTORISTAS ====================
 app.get('/api/motoristas', async (req, res) => {
@@ -181,9 +194,7 @@ app.get('/api/manutencoes', async (req, res) => {
 app.post('/api/manutencoes', async (req, res) => {
   const { placa, tipo, descricao, custo, data } = req.body;
   try {
-    // Garante conversão correta com centavos
     const custoDecimal = converterValorDecimal(custo);
-
     const result = await pool.query(
       'INSERT INTO manutencoes (placa, tipo, descricao, custo, data) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [placa.toUpperCase(), tipo, descricao, custoDecimal, data]
@@ -297,7 +308,7 @@ app.get('/api/dashboard/grafico-turnos', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// ==================== RELATÓRIO EXCEL (CSV PERFEITO COM PONTO E VÍRGULA) ====================
+// ==================== RELATÓRIO EXCEL (CSV) ====================
 app.get('/api/relatorios/completo.csv', async (req, res) => {
   const { data, motorista_id } = req.query;
   try {

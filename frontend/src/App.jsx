@@ -245,7 +245,7 @@ export default function App() {
   };
 
   const deletarMotorista = async (id) => {
-    if (!confirm("Deseja realmente apagar este motorista?")) return;
+    if (!window.confirm("Deseja realmente apagar este motorista?")) return;
     try {
       await fetch(`${API_URL}/api/motoristas/${id}`, { method: 'DELETE' });
       carregarDados(); carregarStats(); carregarGraficos();
@@ -283,7 +283,7 @@ export default function App() {
   };
 
   const deletarVeiculo = async (id) => {
-    if (!confirm("Deseja realmente apagar este veículo?")) return;
+    if (!window.confirm("Deseja realmente apagar este veículo?")) return;
     try {
       await fetch(`${API_URL}/api/veiculos/${id}`, { method: 'DELETE' });
       carregarDados(); carregarStats(); carregarGraficos();
@@ -293,7 +293,7 @@ export default function App() {
   };
 
   const deletarJornada = async (id) => {
-    if (!confirm("Deseja realmente remover este vínculo/turno?")) return;
+    if (!window.confirm("Deseja realmente remover este vínculo/turno?")) return;
     try {
       await fetch(`${API_URL}/api/jornadas/${id}`, { method: 'DELETE' });
       carregarDados(); carregarStats(); carregarGraficos();
@@ -340,7 +340,7 @@ export default function App() {
   };
 
   const deletarManutencao = async (id) => {
-    if (!confirm("Deseja realmente apagar este registro de custo?")) return;
+    if (!window.confirm("Deseja realmente apagar este registro de custo?")) return;
     try {
       await fetch(`${API_URL}/api/manutencoes/${id}`, { method: 'DELETE' });
       carregarManutencoes(); carregarStats();
@@ -416,7 +416,7 @@ export default function App() {
       });
     }, 2000);
 
-    alert(`Simulação ao vivo iniciada para o veículo ${placaVeiculo}!`);
+    console.log(`Simulação ao vivo iniciada para o veículo ${placaVeiculo}!`);
   };
 
   const getTabStyle = (nomeAba) => ({
@@ -489,7 +489,6 @@ export default function App() {
               <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Indicadores, estatísticas rápidas e gráficos analíticos em tempo real.</p>
             </div>
 
-            {/* SEÇÃO DE TURNOS ATIVOS */}
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px', boxSizing: 'border-box' }}>
               <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <LinkIcon size={18} color="#7c3aed" /> Vínculos Ativos na Frota (Motorista com Veículo)

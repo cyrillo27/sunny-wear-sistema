@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { io } from 'socket.io-client';
-import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Wrench, LogOut, Fuel } from 'lucide-react-native';
+import { Truck, Users, MapPin, List, LayoutDashboard, Wrench, LogOut, Fuel } from 'lucide-react-native';
+import * as Location from 'expo-location';
 
 const API_URL = 'https://sunny-wear-sistema.onrender.com';
 const socket = io(API_URL);
@@ -12,9 +13,7 @@ export default function App() {
   const [senhaLogin, setSenhaLogin] = useState('');
   const [aba, setAba] = useState('dashboard');
 
-  const [motoristasList, setMotoristasList] = useState([]);
   const [veiculosList, setVeiculosList] = useState([]);
-  const [jornadasList, setJornadasList] = useState([]);
   
   // Estados para o Abastecimento / Custos pelo Mobile
   const [placaAbastecimento, setPlacaAbastecimento] = useState('');
@@ -22,44 +21,68 @@ export default function App() {
   const [valorAbastecimento, setValorAbastecimento] = useState('');
   const [quilometragem, setQuilometragem] = useState('');
 
-  // Estados de Rastreamento GPS ao vivo do motorista
+  // Estados de Rastreamento GPS real do motorista
   const [placaRastreamento, setPlacaRastreamento] = useState('');
   const [rastreando, setRastreando] = useState(false);
 
   const [stats, setStats] = useState({ total_motoristas: 0, total_veiculos: 0, total_jornadas: 0, total_alertas: 0, custo_total: 0 });
-  const [manutencoesList, setManutencoesList] = useState([]);
 
   useEffect(() => {
     if (!isLogged) return;
     carregarDados();
     carregarStats();
-    carregarManutencoes();
   }, [isLogged]);
 
-  // Simulação de envio de GPS ao vivo pelo motorista
+  // Rastreamento GPS Real usando o Expo Location
   useEffect(() => {
-    let intervalo = null;
-    if (rastreando && placaRastreamento) {
-      let lat = -23.5505 + (Math.random() - 0.5) * 0.02;
-      let lng = -46.6333 + (Math.random() - 0.5) * 0.02;
+    let locationSubscription = null;
 
-      intervalo = setInterval(() => {
-        lat += (Math.random() - 0.5) * 0.001;
-        lng += (Math.random() - 0.5) * 0.001;
-        const velocidadeSimulada = Math.floor(Math.random() * 40) + 40;
+    async function startLocationTracking() {
+      // 1. Solicitar permissão de localização em primeiro plano
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão negada', 'Precisamos da sua localização para o rastreamento em tempo real.');
+        setRastreando(false);
+        return;
+      }
 
-        socket.emit('atualizar_localizacao', {
-          placa: placaRastreamento,
-          latitude: lat,
-          longitude: lng,
-          velocidade: velocidadeSimulada,
-          horario: new Date().toISOString()
-        });
-      }, 3000);
-    } else {
-      clearInterval(intervalo);
+      // 2. Iniciar monitoramento contínuo da posição real
+      locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000, // Envia a cada 5 segundos
+          distanceInterval: 10, // Envia a cada 10 metros percorridos
+        },
+        (location) => {
+          const { latitude, longitude, speed } = location.coords;
+          
+          // Converte velocidade de metros por segundo (m/s) para km/h
+          const velocidadeKm = speed && speed > 0 ? Math.round(speed * 3.6) : 0;
+
+          socket.emit('atualizar_localizacao', {
+            placa: placaRastreamento,
+            latitude: latitude,
+            longitude: longitude,
+            velocidade: velocidadeKm,
+            horario: new Date().toISOString()
+          });
+        }
+      );
     }
-    return () => clearInterval(intervalo);
+
+    if (rastreando && placaRastreamento) {
+      startLocationTracking();
+    } else {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    }
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
   }, [rastreando, placaRastreamento]);
 
   const handleLogin = async () => {
@@ -95,9 +118,6 @@ export default function App() {
 
   const carregarDados = async () => {
     try {
-      const resMot = await fetch(`${API_URL}/api/motoristas`);
-      setMotoristasList(await resMot.json());
-      
       const resVei = await fetch(`${API_URL}/api/veiculos`);
       const veiData = await resVei.json();
       setVeiculosList(veiData);
@@ -105,9 +125,6 @@ export default function App() {
         if (!placaAbastecimento) setPlacaAbastecimento(veiData[0].placa);
         if (!placaRastreamento) setPlacaRastreamento(veiData[0].placa);
       }
-
-      const resJor = await fetch(`${API_URL}/api/jornadas`);
-      setJornadasList(await resJor.json());
     } catch (e) {
       console.error("Erro ao carregar dados", e);
     }
@@ -117,13 +134,6 @@ export default function App() {
     try {
       const res = await fetch(`${API_URL}/api/dashboard/stats`);
       setStats(await res.json());
-    } catch (e) { console.error(e); }
-  };
-
-  const carregarManutencoes = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/manutencoes`);
-      setManutencoesList(await res.json());
     } catch (e) { console.error(e); }
   };
 
@@ -155,7 +165,6 @@ export default function App() {
       setLitrosAbastecimento('');
       setValorAbastecimento('');
       setQuilometragem('');
-      carregarManutencoes();
       carregarStats();
     } catch (err) {
       Alert.alert("Erro", err.message);
@@ -204,7 +213,7 @@ export default function App() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={{ background: '#0284c7', padding: 8, borderRadius: 8 }}>
+            <View style={{ backgroundColor: '#0284c7', padding: 8, borderRadius: 8 }}>
               <Truck size={20} color="#fff" />
             </View>
             <View>
@@ -264,8 +273,8 @@ export default function App() {
 
         {aba === 'gps' && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>📍 Enviar Localização (GPS)</Text>
-            <Text style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>Ative o envio para simular o rastreamento em tempo real do seu veículo para o painel web.</Text>
+            <Text style={styles.sectionTitle}>📍 Enviar Localização Real (GPS)</Text>
+            <Text style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>Ative para enviar a sua geolocalização real direto do celular para o painel web em tempo real.</Text>
 
             <Text style={styles.label}>Placa do Veículo em Operação</Text>
             <TextInput style={styles.inputMobile} placeholder="ABC-1234" value={placaRastreamento} onChangeText={setPlacaRastreamento} />
@@ -274,12 +283,12 @@ export default function App() {
               style={[styles.primaryButton, { backgroundColor: rastreando ? '#dc2626' : '#16a34a', marginTop: 10 }]} 
               onPress={() => setRastreando(!rastreando)}
             >
-              <Text style={styles.buttonText}>{rastreando ? '⏹️ Parar Transmissão GPS' : '▶️ Iniciar Transmissão GPS'}</Text>
+              <Text style={styles.buttonText}>{rastreando ? '⏹️ Parar Transmissão GPS Real' : '▶️ Iniciar Transmissão GPS Real'}</Text>
             </TouchableOpacity>
 
             {rastreando && (
               <View style={{ marginTop: 16, padding: 12, backgroundColor: '#f0fdf4', borderRadius: 8, borderWidth: 1, borderColor: '#bbf7d0', alignItems: 'center' }}>
-                <Text style={{ color: '#16a34a', fontWeight: 'bold' }}>📡 Transmitindo localização ao vivo...</Text>
+                <Text style={{ color: '#16a34a', fontWeight: 'bold' }}>📡 Transmitindo GPS real do aparelho...</Text>
               </View>
             )}
           </View>

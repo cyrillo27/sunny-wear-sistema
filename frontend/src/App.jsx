@@ -67,6 +67,41 @@ export default function App() {
   const [dadosGraficoTurnos, setDadosGraficoTurnos] = useState([]);
   const [posicoesAoVivo, setPosicoesAoVivo] = useState({});
 
+  // MÁSCARAS E VALIDADORES INTELIGENTES
+  const handleNomeChange = (e) => {
+    // Permite apenas letras e espaços
+    const apenasLetras = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
+    setNome(apenasLetras);
+  };
+
+  const handleCnhChange = (e) => {
+    // Permite apenas números e limita a 11 dígitos
+    const apenasNumeros = e.target.value.replace(/\D/g, '').slice(0, 11);
+    setCnh(apenasNumeros);
+  };
+
+  const handleTelefoneChange = (e) => {
+    // Formata automaticamente para (XX) XXXXX-XXXX
+    let valor = e.target.value.replace(/\D/g, '').slice(0, 11);
+    if (valor.length > 6) {
+      valor = `(${valor.slice(0, 2)}) ${valor.slice(2, 7)}-${valor.slice(7)}`;
+    } else if (valor.length > 2) {
+      valor = `(${valor.slice(0, 2)}) ${valor.slice(2)}`;
+    } else if (valor.length > 0) {
+      valor = `(${valor}`;
+    }
+    setTelefone(valor);
+  };
+
+  const handlePlacaChange = (e) => {
+    // Formata para o padrão de placa ABC-1234 (ou Mercosul ABC1D23)
+    let valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+    if (valor.length > 3) {
+      valor = `${valor.slice(0, 3)}-${valor.slice(3)}`;
+    }
+    setPlaca(valor);
+  };
+
   const converterValorDecimal = (valor) => {
     if (!valor) return 0;
     const valorLimpo = String(valor).replace(',', '.');
@@ -104,7 +139,6 @@ export default function App() {
     carregarManutencoes();
   }, [aba, isLogged]);
 
-  // LOGIN SEGURO VIA BACKEND
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!usuarioLogin || !senhaLogin) {
@@ -191,6 +225,10 @@ export default function App() {
     e.preventDefault();
     if (!nome.trim() || !cnh.trim()) {
       alert("Por favor, preencha o Nome e a CNH do motorista.");
+      return;
+    }
+    if (cnh.length < 9) {
+      alert("A CNH informada é inválida. Digite ao menos 9 dígitos.");
       return;
     }
 
@@ -515,9 +553,18 @@ export default function App() {
                 <h2 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', margin: 0 }}>Novo Motorista</h2>
               </div>
               <form onSubmit={cadastrarMotorista} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Nome Completo</label><input type="text" placeholder="Ex: João da Silva" value={nome} onChange={e => setNome(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>CNH</label><input type="text" placeholder="Número da CNH" value={cnh} onChange={e => setCnh(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Telefone</label><input type="text" placeholder="(11) 99999-9999" value={telefone} onChange={e => setTelefone(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Nome Completo (Apenas Letras)</label>
+                  <input type="text" placeholder="Ex: João da Silva" value={nome} onChange={handleNomeChange} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>CNH (Apenas Números - Máx 11)</label>
+                  <input type="text" placeholder="12345678901" value={cnh} onChange={handleCnhChange} maxLength={11} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Telefone (Celular com DDD)</label>
+                  <input type="text" placeholder="(11) 99999-9999" value={telefone} onChange={handleTelefoneChange} maxLength={15} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                </div>
                 <button type="submit" style={{ background: '#0284c7', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Salvar Motorista</button>
               </form>
             </div>
@@ -527,11 +574,23 @@ export default function App() {
                 <h2 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', margin: 0 }}>Novo Veículo</h2>
               </div>
               <form onSubmit={cadastrarVeiculo} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><input type="text" placeholder="ABC-1234" value={placa} onChange={e => setPlaca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Modelo</label><input type="text" placeholder="Ex: Fiorino" value={modelo} onChange={e => setModelo(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa (Formato ABC-1234)</label>
+                  <input type="text" placeholder="ABC-1234" value={placa} onChange={handlePlacaChange} maxLength={8} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Modelo</label>
+                  <input type="text" placeholder="Ex: Fiorino" value={modelo} onChange={e => setModelo(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Marca</label><input type="text" placeholder="Fiat" value={marca} onChange={e => setMarca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
-                  <div style={{ width: '100px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Ano</label><input type="number" placeholder="2023" value={ano} onChange={e => setAno(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Marca</label>
+                    <input type="text" placeholder="Fiat" value={marca} onChange={e => setMarca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  </div>
+                  <div style={{ width: '100px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Ano</label>
+                    <input type="number" placeholder="2023" value={ano} onChange={e => setAno(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  </div>
                 </div>
                 <button type="submit" style={{ background: '#059669', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Salvar Veículo</button>
               </form>

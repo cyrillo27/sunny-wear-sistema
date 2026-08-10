@@ -410,15 +410,16 @@ export default function App() {
   };
 
   const getTabStyle = (nomeAba) => ({
-    display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px',
+    display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px',
     background: aba === nomeAba ? '#0284c7' : '#334155', color: '#fff', border: 'none',
-    borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '13px', transition: 'all 0.2s ease'
+    borderRadius: '6px', cursor: 'pointer', fontWeight: '500', fontSize: '13px', transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap'
   });
 
   if (!isLogged) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
-        <form onSubmit={handleLogin} style={{ background: '#1e293b', padding: '40px', borderRadius: '12px', width: '320px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid #334155' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', color: '#fff', fontFamily: 'Inter, sans-serif', padding: '16px' }}>
+        <form onSubmit={handleLogin} style={{ background: '#1e293b', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '360px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '1px solid #334155', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ background: '#0284c7', width: '50px', height: '50px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}><Truck size={28} color="#fff" /></div>
             <h2 style={{ fontSize: '20px', fontWeight: '700', margin: '0 0 4px 0', color: '#f8fafc' }}>☀️ Sunny Wear</h2>
@@ -439,16 +440,16 @@ export default function App() {
   }
 
   return (
-    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '24px', background: '#f1f5f9', minHeight: '100vh', color: '#1e293b' }}>
-      <header style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '24px 32px', borderRadius: '12px', marginBottom: '28px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+    <div style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '16px', background: '#f1f5f9', minHeight: '100vh', color: '#1e293b', boxSizing: 'border-box' }}>
+      <header style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ background: '#0284c7', padding: '10px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Truck size={24} color="#fff" />
             </div>
             <div>
-              <h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0, letterSpacing: '-0.5px' }}>☀️ Sunny Wear Sistema</h1>
-              <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Controle Logístico e Rastreamento</p>
+              <h1 style={{ fontSize: '20px', fontWeight: '700', margin: 0, letterSpacing: '-0.5px' }}>☀️ Sunny Wear Sistema</h1>
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '12px' }}>Controle Logístico e Rastreamento</p>
             </div>
           </div>
           <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#ef4444', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>
@@ -471,14 +472,14 @@ export default function App() {
         </div>
       </header>
 
-      <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <main style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', boxSizing: 'border-box' }}>
         {aba === 'dashboard' && (
           <div>
             <div style={{ marginBottom: '24px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#0f172a', margin: '0 0 4px 0' }}>Visão Geral da Frota</h2>
               <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Indicadores, estatísticas rápidas e gráficos analíticos em tempo real.</p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '28px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
               <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ background: '#e0f2fe', color: '#0284c7', padding: '12px', borderRadius: '10px' }}><Truck size={22} /></div>
                 <div><p style={{ margin: '0 0 2px 0', fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículos</p><h3 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>{stats.total_veiculos}</h3></div>
@@ -497,11 +498,11 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '24px', marginBottom: '28px' }}>
-              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '16px' }}>📊 Alertas de Excesso de Velocidade por Veículo</h3>
-                {dadosGraficoAlertas.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum dado de alerta registrado.</p> : (
-                  <div style={{ width: '100%', height: '280px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '28px' }}>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '16px' }}>📊 Alertas de Excesso de Velocidade</h3>
+                {dadosGraficoAlertas.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum dado registrado.</p> : (
+                  <div style={{ width: '100%', height: '260px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={dadosGraficoAlertas}>
                         <XAxis dataKey="placa" stroke="#64748b" fontSize={12} />
@@ -514,29 +515,31 @@ export default function App() {
                 )}
               </div>
 
-              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0f172a', marginBottom: '16px', width: '100%', textAlign: 'left' }}>🍩 Distribuição de Turnos por Motorista</h3>
+              <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '16px', width: '100%', textAlign: 'left' }}>🍩 Distribuição de Turnos</h3>
                 {dadosGraficoTurnos.length === 0 ? (
                   <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum turno registrado.</p>
                 ) : (
-                  <div style={{ width: '100%', height: '280px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <PieChart width={360} height={260}>
-                      <Pie 
-                        data={dadosGraficoTurnos} 
-                        dataKey="total" 
-                        nameKey="motorista" 
-                        cx="50%" 
-                        cy="50%" 
-                        outerRadius={80} 
-                        label
-                      >
-                        {dadosGraficoTurnos.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
+                  <div style={{ width: '100%', height: '260px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie 
+                          data={dadosGraficoTurnos} 
+                          dataKey="total" 
+                          nameKey="motorista" 
+                          cx="50%" 
+                          cy="50%" 
+                          outerRadius={75} 
+                          label
+                        >
+                          {dadosGraficoTurnos.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 )}
               </div>
@@ -545,8 +548,8 @@ export default function App() {
         )}
 
         {aba === 'cadastros' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
-            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                 <Users size={20} color="#0284c7" />
                 <h2 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', margin: 0 }}>Novo Motorista</h2>
@@ -554,20 +557,20 @@ export default function App() {
               <form onSubmit={cadastrarMotorista} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Nome Completo (Apenas Letras)</label>
-                  <input type="text" placeholder="Ex: João da Silva" value={nome} onChange={handleNomeChange} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  <input type="text" placeholder="Ex: João da Silva" value={nome} onChange={handleNomeChange} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>CNH (Apenas Números - Máx 11)</label>
-                  <input type="text" placeholder="12345678901" value={cnh} onChange={handleCnhChange} maxLength={11} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  <input type="text" placeholder="12345678901" value={cnh} onChange={handleCnhChange} maxLength={11} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Telefone (Celular com DDD)</label>
-                  <input type="text" placeholder="(11) 99999-9999" value={telefone} onChange={handleTelefoneChange} maxLength={15} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  <input type="text" placeholder="(11) 99999-9999" value={telefone} onChange={handleTelefoneChange} maxLength={15} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                 </div>
                 <button type="submit" style={{ background: '#0284c7', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Salvar Motorista</button>
               </form>
             </div>
-            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                 <Truck size={20} color="#059669" />
                 <h2 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', margin: 0 }}>Novo Veículo</h2>
@@ -575,20 +578,20 @@ export default function App() {
               <form onSubmit={cadastrarVeiculo} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa (Formato ABC-1234)</label>
-                  <input type="text" placeholder="ABC-1234" value={placa} onChange={handlePlacaChange} maxLength={8} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  <input type="text" placeholder="ABC-1234" value={placa} onChange={handlePlacaChange} maxLength={8} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Modelo</label>
-                  <input type="text" placeholder="Ex: Fiorino" value={modelo} onChange={e => setModelo(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  <input type="text" placeholder="Ex: Fiorino" value={modelo} onChange={e => setModelo(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 140px' }}>
                     <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Marca</label>
-                    <input type="text" placeholder="Fiat" value={marca} onChange={e => setMarca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <input type="text" placeholder="Fiat" value={marca} onChange={e => setMarca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                   </div>
-                  <div style={{ width: '100px' }}>
+                  <div style={{ flex: '1 1 90px' }}>
                     <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Ano</label>
-                    <input type="number" placeholder="2023" value={ano} onChange={e => setAno(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <input type="number" placeholder="2023" value={ano} onChange={e => setAno(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                   </div>
                 </div>
                 <button type="submit" style={{ background: '#059669', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Salvar Veículo</button>
@@ -598,28 +601,28 @@ export default function App() {
         )}
 
         {aba === 'listas' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
-            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Motoristas Cadastrados ({motoristasList.length})</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+              <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Motoristas ({motoristasList.length})</h3>
               {motoristasList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhum motorista cadastrado.</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {motoristasList.map(m => (
-                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <div><strong style={{ fontSize: '14px', color: '#1e293b' }}>{m.nome}</strong><p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b' }}>CNH: {m.cnh} | Tel: {m.telefone || 'Não informado'}</p></div>
-                      <button onClick={() => deletarMotorista(m.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '8px' }}>
+                      <div style={{ overflow: 'hidden' }}><strong style={{ fontSize: '14px', color: '#1e293b' }}>{m.nome}</strong><p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b' }}>CNH: {m.cnh} | Tel: {m.telefone || 'N/A'}</p></div>
+                      <button onClick={() => deletarMotorista(m.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }}><Trash2 size={16} /></button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Veículos Cadastrados ({veiculosList.length})</h3>
+            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+              <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Veículos ({veiculosList.length})</h3>
               {veiculosList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhum veículo cadastrado.</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {veiculosList.map(v => (
-                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <div><strong style={{ fontSize: '14px', color: '#1e293b' }}>{v.modelo} <span style={{ fontWeight: '400', color: '#64748b' }}>({v.marca})</span></strong><p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#334155' }}>Placa: <code style={{ background: '#cbd5e1', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{v.placa}</code></p></div>
-                      <button onClick={() => deletarVeiculo(v.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '8px' }}>
+                      <div style={{ overflow: 'hidden' }}><strong style={{ fontSize: '14px', color: '#1e293b' }}>{v.modelo} <span style={{ fontWeight: '400', color: '#64748b' }}>({v.marca})</span></strong><p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#334155' }}>Placa: <code style={{ background: '#cbd5e1', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{v.placa}</code></p></div>
+                      <button onClick={() => deletarVeiculo(v.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }}><Trash2 size={16} /></button>
                     </div>
                   ))}
                 </div>
@@ -629,19 +632,19 @@ export default function App() {
         )}
 
         {aba === 'jornadas' && (
-          <div style={{ background: '#fff', padding: '28px', borderRadius: '12px', maxWidth: '540px', margin: '0 auto', border: '1px solid #e2e8f0' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '540px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><LinkIcon size={18} color="#7c3aed" /> Vincular Motorista ao Veículo</h2>
             <form onSubmit={criarJornada} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Motorista</label><select value={motoristaSelecionado} onChange={e => setMotoristaSelecionado(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }}><option value="">-- Selecione o Motorista --</option>{motoristasList.map(m => <option key={m.id} value={m.id}>{m.nome} (CNH: {m.cnh})</option>)}</select></div>
-              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículo</label><select value={veiculoSelecionado} onChange={e => setVeiculoSelecionado(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }}><option value="">-- Selecione o Veículo --</option>{veiculosList.map(v => <option key={v.id} value={v.id}>{v.modelo} - Placa: {v.placa}</option>)}</select></div>
-              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Início da Jornada</label><input type="datetime-local" value={dataIniciada} onChange={e => setDataIniciada(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Motorista</label><select value={motoristaSelecionado} onChange={e => setMotoristaSelecionado(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione --</option>{motoristasList.map(m => <option key={m.id} value={m.id}>{m.nome} (CNH: {m.cnh})</option>)}</select></div>
+              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículo</label><select value={veiculoSelecionado} onChange={e => setVeiculoSelecionado(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione --</option>{veiculosList.map(v => <option key={v.id} value={v.id}>{v.modelo} - Placa: {v.placa}</option>)}</select></div>
+              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Início da Jornada</label><input type="datetime-local" value={dataIniciada} onChange={e => setDataIniciada(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
               <button type="submit" style={{ background: '#7c3aed', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Registrar Vínculo</button>
             </form>
           </div>
         )}
 
         {aba === 'historico' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '700px', margin: '0 auto', border: '1px solid #e2e8f0' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '700px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><History size={18} color="#7c3aed" /> Histórico de Turnos Registrados</h2>
             {jornadasList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhum turno registrado ainda.</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -658,32 +661,32 @@ export default function App() {
         )}
 
         {aba === 'manutencoes' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
-            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
               <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><Wrench size={18} color="#d97706" /> Registrar Custo ou Manutenção</h2>
               <form onSubmit={cadastrarManutencao} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículo (Placa)</label><select value={placaManutencao} onChange={e => setPlacaManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }}><option value="">-- Selecione o Veículo --</option>{veiculosList.map(v => <option key={v.id} value={v.placa}>{v.modelo} ({v.placa})</option>)}</select></div>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Tipo de Custo</label><select value={tipoManutencao} onChange={e => setTipoManutencao(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }}><option value="Combustível">⛽ Combustível</option><option value="Revisão Preventiva">🔧 Revisão Preventiva</option><option value="Manutenção Corretiva">🛠️ Manutenção Corretiva</option><option value="Outros">📦 Outros</option></select></div>
-                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Descrição</label><input type="text" placeholder="Ex: Troca de óleo" value={descricaoManutencao} onChange={e => setDescricaoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo (R$)</label><input type="text" placeholder="150.50 ou 150,50" value={custoManutencao} onChange={e => setCustoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
-                  <div style={{ flex: 1 }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataManutencao} onChange={e => setDataManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Veículo (Placa)</label><select value={placaManutencao} onChange={e => setPlacaManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Selecione --</option>{veiculosList.map(v => <option key={v.id} value={v.placa}>{v.modelo} ({v.placa})</option>)}</select></div>
+                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Tipo de Custo</label><select value={tipoManutencao} onChange={e => setTipoManutencao(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="Combustível">⛽ Combustível</option><option value="Revisão Preventiva">🔧 Revisão Preventiva</option><option value="Manutenção Corretiva">🛠️ Manutenção Corretiva</option><option value="Outros">📦 Outros</option></select></div>
+                <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Descrição</label><input type="text" placeholder="Ex: Troca de óleo" value={descricaoManutencao} onChange={e => setDescricaoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 140px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Custo (R$)</label><input type="text" placeholder="150.50" value={custoManutencao} onChange={e => setCustoManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
+                  <div style={{ flex: '1 1 140px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataManutencao} onChange={e => setDataManutencao(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
                 </div>
                 <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '11px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', marginTop: '8px' }}>Salvar Custo</button>
               </form>
             </div>
-            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
               <h3 style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Histórico de Custos ({manutencoesList.length})</h3>
               {manutencoesList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Nenhum custo registrado.</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
                   {manutencoesList.map(m => (
-                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <div>
+                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '8px' }}>
+                      <div style={{ overflow: 'hidden' }}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '2px' }}><span style={{ fontSize: '12px', background: '#fef3c7', color: '#d97706', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{m.tipo}</span><code style={{ background: '#cbd5e1', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', fontSize: '12px' }}>{m.placa}</code></div>
                         <p style={{ margin: '2px 0', fontSize: '14px', color: '#1e293b' }}>{m.descricao}</p>
                         <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>📅 {m.data} | 💰 <strong>R$ {Number(m.custo || 0).toFixed(2)}</strong></p>
                       </div>
-                      <button onClick={() => deletarManutencao(m.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                      <button onClick={() => deletarManutencao(m.id)} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', flexShrink: 0 }}><Trash2 size={16} /></button>
                     </div>
                   ))}
                 </div>
@@ -693,11 +696,11 @@ export default function App() {
         )}
 
         {aba === 'itinerario' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '750px', margin: '0 auto', border: '1px solid #e2e8f0' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '750px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '6px' }}><Navigation size={18} color="#0284c7" /> Histórico de Ruas por Data</h2>
             <form onSubmit={buscarItinerario} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '12px' }}>
-              <div style={{ flex: 1, minWidth: '220px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><select value={placaItinerario} onChange={e => setPlacaItinerario(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }}><option value="">-- Escolha --</option>{veiculosList.map(v => <option key={v.id} value={v.placa}>{v.modelo} ({v.placa})</option>)}</select></div>
-              <div style={{ flex: 1, minWidth: '180px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataItinerario} onChange={e => setDataItinerario(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+              <div style={{ flex: '1 1 200px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><select value={placaItinerario} onChange={e => setPlacaItinerario(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Escolha --</option>{veiculosList.map(v => <option key={v.id} value={v.placa}>{v.modelo} ({v.placa})</option>)}</select></div>
+              <div style={{ flex: '1 1 160px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={dataItinerario} onChange={e => setDataItinerario(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
               <button type="submit" style={{ background: '#0284c7', color: '#fff', padding: '10px 20px', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Consultar</button>
             </form>
             <div style={{ marginTop: '24px' }}>
@@ -716,11 +719,11 @@ export default function App() {
         )}
 
         {aba === 'multas' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '700px', margin: '0 auto', border: '1px solid #e2e8f0' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '700px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}><ShieldAlert size={18} color="#dc2626" /> Consultar Condutor por Multa</h2>
             <form onSubmit={consultarMulta} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '180px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><input type="text" placeholder="Ex: ABC-1234" value={buscaPlaca} onChange={e => setBuscaPlaca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
-              <div style={{ flex: 1, minWidth: '200px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data/Hora</label><input type="datetime-local" value={buscaData} onChange={e => setBuscaData(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+              <div style={{ flex: '1 1 180px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Placa</label><input type="text" placeholder="Ex: ABC-1234" value={buscaPlaca} onChange={e => setBuscaPlaca(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
+              <div style={{ flex: '1 1 200px' }}><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data/Hora</label><input type="datetime-local" value={buscaData} onChange={e => setBuscaData(e.target.value)} required style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
               <button type="submit" style={{ background: '#dc2626', color: '#fff', padding: '10px 20px', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Buscar</button>
             </form>
             <div style={{ marginTop: '20px' }}>
@@ -738,19 +741,19 @@ export default function App() {
         )}
 
         {aba === 'aovivo' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '800px', margin: '0 auto', border: '1px solid #e2e8f0' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '900px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}><MapPin size={18} color="#0284c7" /> Monitoramento ao Vivo</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
               {veiculosList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Cadastre veículos primeiro.</p> : (
                 veiculosList.map(v => (
-                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', borderRadius: '6px', border: '1px solid #e2e8f0', gap: '8px', flexWrap: 'wrap' }}>
                     <span><strong>{v.modelo}</strong> (<code>{v.placa}</code>)</span>
                     <button onClick={() => simularMovimento(v.placa)} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>Simular Sinal GPS</button>
                   </div>
                 ))
               )}
             </div>
-            <div style={{ height: '420px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+            <div style={{ height: '400px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
               <MapContainer center={[-23.5505, -46.6333]} zoom={12} style={{ height: '100%', width: '100%' }}>
                 <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 {Object.values(posicoesAoVivo).map((p, idx) => (
@@ -764,12 +767,12 @@ export default function App() {
         )}
 
         {aba === 'alertas' && (
-          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '800px', margin: '0 auto', border: '1px solid #e2e8f0' }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '800px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: '700', marginBottom: '6px' }}><Bell size={20} color="#dc2626" /> Alertas de Excesso de Velocidade</h2>
             {alertasList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>Nenhum alerta registrado.</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {alertasList.map((alerta, idx) => (
-                  <div key={idx} style={{ background: '#fef2f2', borderLeft: '4px solid #dc2626', padding: '14px', borderRadius: '6px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={idx} style={{ background: '#fef2f2', borderLeft: '4px solid #dc2626', padding: '14px', borderRadius: '6px', border: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <div><p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: '#991b1b' }}>{alerta.mensagem}</p><p style={{ margin: 0, fontSize: '12px', color: '#7f1d1d' }}>{new Date(alerta.horario).toLocaleString()}</p></div>
                     <div><code style={{ background: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>{alerta.placa}</code></div>
                   </div>
@@ -780,14 +783,14 @@ export default function App() {
         )}
 
         {aba === 'relatorios' && (
-          <div style={{ background: '#fff', padding: '32px', borderRadius: '12px', maxWidth: '650px', margin: '0 auto', border: '1px solid #e2e8f0' }}>
+          <div style={{ background: '#fff', padding: '32px', borderRadius: '12px', maxWidth: '650px', margin: '0 auto', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ background: '#e0f2fe', color: '#0284c7', width: '60px', height: '60px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}><FileDown size={32} /></div>
               <h2 style={{ color: '#0f172a', fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>Exportar Relatório</h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
-              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Motorista</label><select value={filtroMotoristaRelatorio} onChange={e => setFiltroMotoristaRelatorio(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }}><option value="">-- Todos --</option>{motoristasList.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}</select></div>
-              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={filtroDataRelatorio} onChange={e => setFiltroDataRelatorio(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Motorista</label><select value={filtroMotoristaRelatorio} onChange={e => setFiltroMotoristaRelatorio(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}><option value="">-- Todos --</option>{motoristasList.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}</select></div>
+              <div><label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Data</label><input type="date" value={filtroDataRelatorio} onChange={e => setFiltroDataRelatorio(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '4px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} /></div>
             </div>
             <div style={{ textAlign: 'center' }}>
               <a href={`${API_URL}/api/relatorios/completo.csv?data=${filtroDataRelatorio}&motorista_id=${filtroMotoristaRelatorio}`} download style={{ background: '#16a34a', color: '#fff', padding: '14px 28px', borderRadius: '8px', fontWeight: '600', fontSize: '15px', textDecoration: 'none', display: 'inline-block' }}>⬇️ Baixar Planilha (CSV)</a>

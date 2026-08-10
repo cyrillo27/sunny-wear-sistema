@@ -15,6 +15,14 @@
           "locationAlwaysAndWhenInUsePermission": "O Sunny Wear precisa da sua localização para o rastreamento em tempo real da frota."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c8500ad0-ad21-405f-a66e-443209a05a41"
+      }
+    },
+    "android": {
+      "package": "com.leandrocyrillo.sunnywearmobile"
+    }
   }
 }

@@ -411,7 +411,7 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) {
-        console.log(data.mensagem);
+        alert(data.mensagem);
       } else {
         alert(data.erro || "Erro ao iniciar simulação.");
       }
@@ -426,7 +426,7 @@ export default function App() {
       return;
     }
 
-    alert(`Rastreamento REAL iniciado para o veículo ${placaVeiculo}! Caminhe com o dispositivo para ver o mapa a atualizar.`);
+    alert(`Rastreamento REAL iniciado para o veículo ${placaVeiculo}! Caminhe com o dispositivo para ver o mapa atualizar.`);
 
     navigator.geolocation.watchPosition(
       (posicao) => {
@@ -834,7 +834,7 @@ export default function App() {
                     ? [parseFloat(Object.values(posicoesAoVivo)[0].latitude), parseFloat(Object.values(posicoesAoVivo)[0].longitude)]
                     : [-23.5505, -46.6333]
                 } 
-                zoom={15} 
+                zoom={14} 
                 style={{ height: '100%', width: '100%' }}
                 key={
                   Object.values(posicoesAoVivo).length > 0 

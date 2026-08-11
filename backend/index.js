@@ -16,13 +16,11 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-// Conexão com o Banco de Dados PostgreSQL (Render)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'sua_string_de_conexao_aqui',
   ssl: { rejectUnauthorized: false }
 });
 
-// Função auxiliar robusta para tratar valores decimais (centavos) no Backend
 const converterValorDecimal = (valor) => {
   if (typeof valor === 'number') return valor;
   if (!valor) return 0;
@@ -30,7 +28,6 @@ const converterValorDecimal = (valor) => {
   return parseFloat(valorTratado) || 0;
 };
 
-// Criar Tabelas caso não existam
 async function criarTabelas() {
   try {
     await pool.query(`
@@ -91,10 +88,8 @@ async function criarTabelas() {
 }
 criarTabelas();
 
-// ==================== ROTA DE AUTENTICAÇÃO (LOGIN SEGURO) ====================
 app.post('/api/login', (req, res) => {
   const { usuario, senha } = req.body;
-
   const ADMIN_USER = 'sunnyadm';
   const ADMIN_PASS = 'sunny@137';
 
@@ -105,7 +100,6 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// ==================== ROTAS DE MOTORISTAS ====================
 app.get('/api/motoristas', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM motoristas ORDER BY id DESC');
@@ -131,7 +125,6 @@ app.delete('/api/motoristas/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// ==================== ROTAS DE VEÍCULOS ====================
 app.get('/api/veiculos', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM veiculos ORDER BY id DESC');
@@ -157,7 +150,6 @@ app.delete('/api/veiculos/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// ==================== ROTAS DE JORNADAS ====================
 app.get('/api/jornadas', async (req, res) => {
   try {
     const query = `
@@ -190,7 +182,6 @@ app.delete('/api/jornadas/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// ==================== ROTAS DE MANUTENÇÕES / CUSTOS ====================
 app.get('/api/manutencoes', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM manutencoes ORDER BY id DESC');
@@ -217,7 +208,6 @@ app.delete('/api/manutencoes/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// ==================== ROTA MOBILE: ABASTECIMENTO ====================
 app.post('/api/mobile/abastecimento', async (req, res) => {
   const { placa, valor } = req.body;
   try {
@@ -234,7 +224,7 @@ app.post('/api/mobile/abastecimento', async (req, res) => {
   }
 });
 
-// ==================== SIMULAÇÃO REAL PELO SERVIDOR (DESTRAVADA) ====================
+// ==================== SIMULAÇÃO INTELIGENTE (COM PERSISTÊNCIA) ====================
 const simulacoesAtivas = {};
 
 app.post('/api/simular/iniciar', async (req, res) => {
@@ -247,16 +237,27 @@ app.post('/api/simular/iniciar', async (req, res) => {
     clearInterval(simulacoesAtivas[placaMaiuscula]);
   }
 
-  // IGNORAMOS o banco de dados temporariamente para destravar o veículo!
-  // Essas coordenadas vão fazer ele iniciar no centro de SP e andar em linha reta
-  let lat = -23.5505; 
-  let lng = -46.6333; 
+  // Busca a última posição salva do veículo no banco, senão assume o centro de SP
+  let lat = -23.5505;
+  let lng = -46.6333;
+
+  try {
+    const ultimaPos = await pool.query(
+      'SELECT latitude, longitude FROM posicoes WHERE placa = $1 ORDER BY horario DESC LIMIT 1',
+      [placaMaiuscula]
+    );
+    if (ultimaPos.rows.length > 0) {
+      lat = parseFloat(ultimaPos.rows[0].latitude);
+      lng = parseFloat(ultimaPos.rows[0].longitude);
+    }
+  } catch (e) {
+    console.error("Erro ao buscar última posição:", e);
+  }
 
   simulacoesAtivas[placaMaiuscula] = setInterval(async () => {
-    // Força o veículo a andar sempre em uma direção clara (Norte/Leste)
     lat += 0.0008; 
     lng += 0.0008;
-    const velocidadeSimulada = Math.floor(Math.random() * 20) + 40; 
+    const velocidadeSimulada = Math.floor(Math.random() * 30) + 35; 
     const horario = new Date().toISOString();
     const rua = "Rua em Simulação (Rota Ativa)"; 
     const bairro = "Centro";
@@ -290,10 +291,9 @@ app.post('/api/simular/iniciar', async (req, res) => {
     }
   }, 2000);
 
-  res.json({ mensagem: `Simulação DESTRAVADA iniciada para ${placaMaiuscula}` });
+  res.json({ mensagem: `Simulação iniciada com sucesso para ${placaMaiuscula}` });
 });
 
-// ==================== ROTAS DE ITINERÁRIO E ALERTAS ====================
 app.get('/api/itinerario/:placa', async (req, res) => {
   const { placa } = req.params;
   const { data } = req.query;
@@ -334,7 +334,6 @@ app.get('/api/multas/consultar', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// ==================== DASHBOARD & ESTATÍSTICAS ====================
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const mot = await pool.query('SELECT COUNT(*) FROM motoristas');
@@ -374,7 +373,6 @@ app.get('/api/dashboard/grafico-turnos', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
-// ==================== RELATÓRIO EXCEL (CSV) ====================
 app.get('/api/relatorios/completo.csv', async (req, res) => {
   const { data, motorista_id } = req.query;
   try {
@@ -432,7 +430,6 @@ app.get('/api/relatorios/completo.csv', async (req, res) => {
   }
 });
 
-// ==================== WEBSOCKET (GPS & ALERTAS) ====================
 io.on('connection', (socket) => {
   console.log('Cliente conectado ao WebSocket:', socket.id);
 
@@ -441,8 +438,8 @@ io.on('connection', (socket) => {
     if (!placa) return;
 
     const placaMaiuscula = placa.toUpperCase();
-    const rua = "Rua do seu Endereço"; 
-    const bairro = "Seu Bairro";
+    const rua = "Localização via GPS"; 
+    const bairro = "São Paulo";
     const cidade = "São Paulo";
 
     try {

@@ -234,7 +234,7 @@ app.post('/api/mobile/abastecimento', async (req, res) => {
   }
 });
 
-// ==================== SIMULAÇÃO REAL PELO SERVIDOR ====================
+// ==================== SIMULAÇÃO REAL PELO SERVIDOR (DESTRAVADA) ====================
 const simulacoesAtivas = {};
 
 app.post('/api/simular/iniciar', async (req, res) => {
@@ -247,67 +247,50 @@ app.post('/api/simular/iniciar', async (req, res) => {
     clearInterval(simulacoesAtivas[placaMaiuscula]);
   }
 
-  try {
-    const ultimaPos = await pool.query(
-      'SELECT latitude, longitude FROM posicoes WHERE placa = $1 ORDER BY horario DESC LIMIT 1',
-      [placaMaiuscula]
-    );
+  // IGNORAMOS o banco de dados temporariamente para destravar o veículo!
+  // Essas coordenadas vão fazer ele iniciar no centro de SP e andar em linha reta
+  let lat = -23.5505; 
+  let lng = -46.6333; 
 
-    let lat, lng;
+  simulacoesAtivas[placaMaiuscula] = setInterval(async () => {
+    // Força o veículo a andar sempre em uma direção clara (Norte/Leste)
+    lat += 0.0008; 
+    lng += 0.0008;
+    const velocidadeSimulada = Math.floor(Math.random() * 20) + 40; 
+    const horario = new Date().toISOString();
+    const rua = "Rua em Simulação (Rota Ativa)"; 
+    const bairro = "Centro";
+    const cidade = "São Paulo";
 
-    if (ultimaPos.rows.length > 0) {
-      lat = parseFloat(ultimaPos.rows[0].latitude);
-      lng = parseFloat(ultimaPos.rows[0].longitude);
-    } else {
-      lat = -23.5800; 
-      lng = -46.6800; 
-    }
+    try {
+      await pool.query(
+        'INSERT INTO posicoes (placa, latitude, longitude, velocidade, rua, bairro, cidade, horario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [placaMaiuscula, lat, lng, velocidadeSimulada, rua, bairro, cidade, horario]
+      );
 
-    let direcao = Math.random() * 10;
-
-    simulacoesAtivas[placaMaiuscula] = setInterval(async () => {
-      direcao += 0.2;
-      lat += Math.sin(direcao) * 0.003; 
-      lng += Math.cos(direcao) * 0.003;
-
-      const velocidadeSimulada = Math.floor(Math.random() * 30) + 35; 
-      const horario = new Date().toISOString();
-      const rua = "Rua Monitorada"; 
-      const bairro = "Seu Bairro";
-      const cidade = "São Paulo";
-
-      try {
-        await pool.query(
-          'INSERT INTO posicoes (placa, latitude, longitude, velocidade, rua, bairro, cidade, horario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-          [placaMaiuscula, lat, lng, velocidadeSimulada, rua, bairro, cidade, horario]
+      if (velocidadeSimulada > 80) {
+        const mensagemAlerta = `Veículo ${placaMaiuscula} ultrapassou o limite de velocidade (${velocidadeSimulada} km/h)`;
+        const alertaRes = await pool.query(
+          'INSERT INTO alertas (placa, mensagem, horario) VALUES ($1, $2, $3) RETURNING *',
+          [placaMaiuscula, mensagemAlerta, horario]
         );
-
-        if (velocidadeSimulada > 80) {
-          const mensagemAlerta = `Veículo ${placaMaiuscula} ultrapassou o limite de velocidade (${velocidadeSimulada} km/h)`;
-          const alertaRes = await pool.query(
-            'INSERT INTO alertas (placa, mensagem, horario) VALUES ($1, $2, $3) RETURNING *',
-            [placaMaiuscula, mensagemAlerta, horario]
-          );
-          io.emit('novo_alerta', alertaRes.rows[0]);
-        }
-
-        io.emit('posicao_motorista', { 
-          placa: placaMaiuscula, 
-          latitude: lat, 
-          longitude: lng, 
-          velocidade: velocidadeSimulada, 
-          rua, 
-          horario 
-        });
-      } catch (err) {
-        console.error("Erro na simulação do servidor:", err);
+        io.emit('novo_alerta', alertaRes.rows[0]);
       }
-    }, 2000);
 
-    res.json({ mensagem: `Simulação oficial iniciada para ${placaMaiuscula}` });
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
+      io.emit('posicao_motorista', { 
+        placa: placaMaiuscula, 
+        latitude: lat, 
+        longitude: lng, 
+        velocidade: velocidadeSimulada, 
+        rua, 
+        horario 
+      });
+    } catch (err) {
+      console.error("Erro na simulação do servidor:", err);
+    }
+  }, 2000);
+
+  res.json({ mensagem: `Simulação DESTRAVADA iniciada para ${placaMaiuscula}` });
 });
 
 // ==================== ROTAS DE ITINERÁRIO E ALERTAS ====================

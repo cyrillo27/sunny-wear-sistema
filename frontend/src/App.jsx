@@ -421,6 +421,44 @@ export default function App() {
     }
   };
 
+  // Função para usar o GPS real do dispositivo (celular/PC)
+  const iniciarRastreamentoReal = (placaVeiculo) => {
+    if (!navigator.geolocation) {
+      alert("O seu navegador não suporta geolocalização.");
+      return;
+    }
+
+    alert(`Rastreamento REAL iniciado para o veículo ${placaVeiculo}! Caminhe com o dispositivo para ver o mapa a atualizar.`);
+
+    navigator.geolocation.watchPosition(
+      (posicao) => {
+        const lat = posicao.coords.latitude;
+        const lng = posicao.coords.longitude;
+        // Velocidade vem em metros/segundo. Multiplicamos por 3.6 para km/h
+        const velocidade = posicao.coords.speed ? Math.round(posicao.coords.speed * 3.6) : 0; 
+        const horario = new Date().toISOString();
+
+        // Envia a sua posição real para o servidor pelo Socket.io
+        socket.emit('atualizar_localizacao', {
+          placa: placaVeiculo, 
+          latitude: lat, 
+          longitude: lng, 
+          velocidade: velocidade, 
+          horario: horario
+        });
+      },
+      (erro) => {
+        console.error("Erro ao apanhar a localização real:", erro);
+        alert("Ative o GPS do celular/dispositivo e dê permissão de localização ao navegador.");
+      },
+      {
+        enableHighAccuracy: true, // Força a usar satélite/GPS preciso
+        maximumAge: 0,
+        timeout: 5000
+      }
+    );
+  };
+
   const getTabStyle = (nomeAba) => ({
     display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px',
     background: aba === nomeAba ? '#0284c7' : '#334155', color: '#fff', border: 'none',
@@ -785,7 +823,10 @@ export default function App() {
                 veiculosList.map(v => (
                   <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', borderRadius: '6px', border: '1px solid #e2e8f0', gap: '8px', flexWrap: 'wrap' }}>
                     <span><strong>{v.modelo}</strong> (<code>{v.placa}</code>)</span>
-                    <button onClick={() => simularMovimento(v.placa)} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>Simular Sinal GPS</button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => simularMovimento(v.placa)} style={{ background: '#475569', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>Testar Simulação</button>
+                      <button onClick={() => iniciarRastreamentoReal(v.placa)} style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>📍 Usar Meu GPS Real</button>
+                    </div>
                   </div>
                 ))
               )}

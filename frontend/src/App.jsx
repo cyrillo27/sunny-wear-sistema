@@ -402,7 +402,6 @@ export default function App() {
     }
   };
 
-  // Simulação controlada de forma oficial pelo Servidor (Backend)
   const simularMovimento = async (placaVeiculo) => {
     try {
       const res = await fetch(`${API_URL}/api/simular/iniciar`, {
@@ -421,7 +420,6 @@ export default function App() {
     }
   };
 
-  // Função para usar o GPS real do dispositivo (celular/PC)
   const iniciarRastreamentoReal = (placaVeiculo) => {
     if (!navigator.geolocation) {
       alert("O seu navegador não suporta geolocalização.");
@@ -434,11 +432,9 @@ export default function App() {
       (posicao) => {
         const lat = posicao.coords.latitude;
         const lng = posicao.coords.longitude;
-        // Velocidade vem em metros/segundo. Multiplicamos por 3.6 para km/h
         const velocidade = posicao.coords.speed ? Math.round(posicao.coords.speed * 3.6) : 0; 
         const horario = new Date().toISOString();
 
-        // Envia a sua posição real para o servidor pelo Socket.io
         socket.emit('atualizar_localizacao', {
           placa: placaVeiculo, 
           latitude: lat, 
@@ -452,7 +448,7 @@ export default function App() {
         alert("Ative o GPS do celular/dispositivo e dê permissão de localização ao navegador.");
       },
       {
-        enableHighAccuracy: true, // Força a usar satélite/GPS preciso
+        enableHighAccuracy: true,
         maximumAge: 0,
         timeout: 5000
       }
@@ -832,7 +828,20 @@ export default function App() {
               )}
             </div>
             <div style={{ height: '500px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
-              <MapContainer center={[-23.5505, -46.6333]} zoom={12} style={{ height: '100%', width: '100%' }}>
+              <MapContainer 
+                center={
+                  Object.values(posicoesAoVivo).length > 0 
+                    ? [parseFloat(Object.values(posicoesAoVivo)[0].latitude), parseFloat(Object.values(posicoesAoVivo)[0].longitude)]
+                    : [-23.5505, -46.6333]
+                } 
+                zoom={15} 
+                style={{ height: '100%', width: '100%' }}
+                key={
+                  Object.values(posicoesAoVivo).length > 0 
+                    ? `${Object.values(posicoesAoVivo)[0].latitude}-${Object.values(posicoesAoVivo)[0].longitude}` 
+                    : 'default'
+                }
+              >
                 <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 {Object.values(posicoesAoVivo).map((p, idx) => (
                   <Marker key={idx} position={[parseFloat(p.latitude), parseFloat(p.longitude)]}>

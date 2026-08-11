@@ -403,15 +403,17 @@ export default function App() {
   };
 
   const simularMovimento = (placaVeiculo) => {
-    let lat = -23.5505 + (Math.random() - 0.5) * 0.02;
-    let lng = -46.6333 + (Math.random() - 0.5) * 0.02;
+    // Pega a última posição ou define um ponto inicial baseado em São Paulo
+    let currentPos = posicoesAoVivo[placaVeiculo];
+    let lat = currentPos ? currentPos.latitude : -23.5505 + (Math.random() - 0.5) * 0.02;
+    let lng = currentPos ? currentPos.longitude : -46.6333 + (Math.random() - 0.5) * 0.02;
 
     const intervalo = setInterval(() => {
       lat += (Math.random() - 0.5) * 0.002;
       lng += (Math.random() - 0.5) * 0.002;
       const velocidadeSimulada = Math.floor(Math.random() * 40) + 50; 
 
-      // ATUALIZA O ESTADO LOCAL PARA O MARCADOR SE MOVER NA TELA NA HORA
+      // Atualiza o estado mantendo o fluxo progressivo e contínuo
       setPosicoesAoVivo(prev => ({
         ...prev,
         [placaVeiculo]: { placa: placaVeiculo, latitude: lat, longitude: lng, velocidade: velocidadeSimulada }

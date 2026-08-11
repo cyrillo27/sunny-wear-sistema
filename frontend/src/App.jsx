@@ -402,29 +402,23 @@ export default function App() {
     }
   };
 
-  const simularMovimento = (placaVeiculo) => {
-    // Pega a última posição ou define um ponto inicial baseado em São Paulo
-    let currentPos = posicoesAoVivo[placaVeiculo];
-    let lat = currentPos ? currentPos.latitude : -23.5505 + (Math.random() - 0.5) * 0.02;
-    let lng = currentPos ? currentPos.longitude : -46.6333 + (Math.random() - 0.5) * 0.02;
-
-    const intervalo = setInterval(() => {
-      lat += (Math.random() - 0.5) * 0.002;
-      lng += (Math.random() - 0.5) * 0.002;
-      const velocidadeSimulada = Math.floor(Math.random() * 40) + 50; 
-
-      // Atualiza o estado mantendo o fluxo progressivo e contínuo
-      setPosicoesAoVivo(prev => ({
-        ...prev,
-        [placaVeiculo]: { placa: placaVeiculo, latitude: lat, longitude: lng, velocidade: velocidadeSimulada }
-      }));
-
-      socket.emit('atualizar_localizacao', {
-        placa: placaVeiculo, latitude: lat, longitude: lng, velocidade: velocidadeSimulada, horario: new Date().toISOString()
+  // Simulação controlada de forma oficial pelo Servidor (Backend)
+  const simularMovimento = async (placaVeiculo) => {
+    try {
+      const res = await fetch(`${API_URL}/api/simular/iniciar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ placa: placaVeiculo })
       });
-    }, 2000);
-
-    console.log(`Simulação ao vivo iniciada para o veículo ${placaVeiculo}!`);
+      const data = await res.json();
+      if (res.ok) {
+        console.log(data.mensagem);
+      } else {
+        alert(data.erro || "Erro ao iniciar simulação.");
+      }
+    } catch (err) {
+      console.error("Erro de conexão ao simular:", err);
+    }
   };
 
   const getTabStyle = (nomeAba) => ({

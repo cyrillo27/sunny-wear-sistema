@@ -234,6 +234,64 @@ app.post('/api/mobile/abastecimento', async (req, res) => {
   }
 });
 
+// ==================== SIMULAÇÃO REAL PELO SERVIDOR ====================
+const simulacoesAtivas = {};
+
+app.post('/api/simular/iniciar', (req, res) => {
+  const { placa } = req.body;
+  if (!placa) return res.status(400).json({ erro: 'Placa obrigatória' });
+
+  const placaMaiuscula = placa.toUpperCase();
+
+  // Se já houver uma simulação ativa para este veículo, limpa antes de reiniciar
+  if (simulacoesAtivas[placaMaiuscula]) {
+    clearInterval(simulacoesAtivas[placaMaiuscula]);
+  }
+
+  // Ponto inicial em São Paulo
+  let lat = -23.5505 + (Math.random() - 0.5) * 0.02;
+  let lng = -46.6333 + (Math.random() - 0.5) * 0.02;
+
+  simulacoesAtivas[placaMaiuscula] = setInterval(async () => {
+    lat += (Math.random() - 0.5) * 0.002;
+    lng += (Math.random() - 0.5) * 0.002;
+    const velocidadeSimulada = Math.floor(Math.random() * 40) + 50; 
+    const horario = new Date().toISOString();
+    const rua = "Av. Paulista, 1000"; 
+    const bairro = "Bela Vista";
+    const cidade = "São Paulo";
+
+    try {
+      await pool.query(
+        'INSERT INTO posicoes (placa, latitude, longitude, velocidade, rua, bairro, cidade, horario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [placaMaiuscula, lat, lng, velocidadeSimulada, rua, bairro, cidade, horario]
+      );
+
+      if (velocidadeSimulada > 80) {
+        const mensagemAlerta = `Veículo ${placaMaiuscula} ultrapassou o limite de velocidade (${velocidadeSimulada} km/h)`;
+        const alertaRes = await pool.query(
+          'INSERT INTO alertas (placa, mensagem, horario) VALUES ($1, $2, $3) RETURNING *',
+          [placaMaiuscula, mensagemAlerta, horario]
+        );
+        io.emit('novo_alerta', alertaRes.rows[0]);
+      }
+
+      io.emit('posicao_motorista', { 
+        placa: placaMaiuscula, 
+        latitude: lat, 
+        longitude: lng, 
+        velocidade: velocidadeSimulada, 
+        rua, 
+        horario 
+      });
+    } catch (err) {
+      console.error("Erro na simulação do servidor:", err);
+    }
+  }, 2000);
+
+  res.json({ mensagem: `Simulação oficial iniciada para ${placaMaiuscula}` });
+});
+
 // ==================== ROTAS DE ITINERÁRIO E ALERTAS ====================
 app.get('/api/itinerario/:placa', async (req, res) => {
   const { placa } = req.params;

@@ -259,17 +259,20 @@ app.post('/api/simular/iniciar', async (req, res) => {
       lat = parseFloat(ultimaPos.rows[0].latitude);
       lng = parseFloat(ultimaPos.rows[0].longitude);
     } else {
-      // Coordenadas padrão baseadas exatamente na região correta que aparece no seu mapa (-23.5800, -46.6800)
       lat = -23.5800; 
       lng = -46.6800; 
     }
 
+    let direcao = Math.random() * 10;
+
     simulacoesAtivas[placaMaiuscula] = setInterval(async () => {
-      lat += (Math.random() - 0.5) * 0.001; 
-      lng += (Math.random() - 0.5) * 0.001;
-      const velocidadeSimulada = Math.floor(Math.random() * 30) + 30; 
+      direcao += 0.2;
+      lat += Math.sin(direcao) * 0.003; 
+      lng += Math.cos(direcao) * 0.003;
+
+      const velocidadeSimulada = Math.floor(Math.random() * 30) + 35; 
       const horario = new Date().toISOString();
-      const rua = "Rua do seu Endereço"; 
+      const rua = "Rua Monitorada"; 
       const bairro = "Seu Bairro";
       const cidade = "São Paulo";
 

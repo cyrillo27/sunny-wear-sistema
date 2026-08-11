@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'; // ADICIONADO: useMap
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Wrench, LogOut } from 'lucide-react';
@@ -16,6 +16,23 @@ L.Icon.Default.mergeOptions({
 const API_URL = 'https://sunny-wear-sistema.onrender.com';
 const socket = io(API_URL);
 const COLORS = ['#0284c7', '#059669', '#7c3aed', '#dc2626', '#d97706', '#475569'];
+
+// ==========================================
+// NOVO COMPONENTE: Move o mapa suavemente
+// ==========================================
+function AutoCenter({ position }) {
+  const map = useMap();
+  useEffect(() => {
+    if (position) {
+      // O flyTo move a câmara com uma animação suave em vez de "saltar"
+      map.flyTo(position, map.getZoom(), {
+        animate: true,
+        duration: 1.5 // Duração da animação em segundos
+      });
+    }
+  }, [position, map]);
+  return null;
+}
 
 export default function App() {
   const [isLogged, setIsLogged] = useState(() => {
@@ -426,7 +443,7 @@ export default function App() {
       return;
     }
 
-    alert(`Rastreamento REAL iniciado para o veículo ${placaVeiculo}! Caminhe com o dispositivo para ver o mapa atualizar.`);
+    alert(`Rastreamento REAL iniciado para o veículo ${placaVeiculo}! Caminhe com o dispositivo para ver o mapa a atualizar.`);
 
     navigator.geolocation.watchPosition(
       (posicao) => {
@@ -829,20 +846,18 @@ export default function App() {
             </div>
             <div style={{ height: '500px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
               <MapContainer 
-                center={
-                  Object.values(posicoesAoVivo).length > 0 
-                    ? [parseFloat(Object.values(posicoesAoVivo)[0].latitude), parseFloat(Object.values(posicoesAoVivo)[0].longitude)]
-                    : [-23.5505, -46.6333]
-                } 
+                center={[-23.5505, -46.6333]} // Posição padrão de arranque
                 zoom={14} 
                 style={{ height: '100%', width: '100%' }}
-                key={
-                  Object.values(posicoesAoVivo).length > 0 
-                    ? `${Object.values(posicoesAoVivo)[0].latitude}-${Object.values(posicoesAoVivo)[0].longitude}` 
-                    : 'default'
-                }
+                // APAGADA a propriedade 'key' que estava a causar o piscar constante
               >
                 <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                
+                {/* ADICIONADO: Componente que atualiza a câmara suavemente quando chegam novos dados */}
+                {Object.values(posicoesAoVivo).length > 0 && (
+                  <AutoCenter position={[parseFloat(Object.values(posicoesAoVivo)[0].latitude), parseFloat(Object.values(posicoesAoVivo)[0].longitude)]} />
+                )}
+
                 {Object.values(posicoesAoVivo).map((p, idx) => (
                   <Marker key={idx} position={[parseFloat(p.latitude), parseFloat(p.longitude)]}>
                     <Popup><strong>Placa:</strong> {p.placa} <br /><strong>Velocidade:</strong> {p.velocidade || 0} km/h</Popup>

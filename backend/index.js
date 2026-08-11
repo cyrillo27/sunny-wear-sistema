@@ -243,13 +243,11 @@ app.post('/api/simular/iniciar', async (req, res) => {
 
   const placaMaiuscula = placa.toUpperCase();
 
-  // Se já houver uma simulação ativa para este veículo, limpa antes de reiniciar
   if (simulacoesAtivas[placaMaiuscula]) {
     clearInterval(simulacoesAtivas[placaMaiuscula]);
   }
 
   try {
-    // Busca a última posição registrada deste veículo no banco para continuar de onde parou
     const ultimaPos = await pool.query(
       'SELECT latitude, longitude FROM posicoes WHERE placa = $1 ORDER BY horario DESC LIMIT 1',
       [placaMaiuscula]
@@ -261,18 +259,18 @@ app.post('/api/simular/iniciar', async (req, res) => {
       lat = parseFloat(ultimaPos.rows[0].latitude);
       lng = parseFloat(ultimaPos.rows[0].longitude);
     } else {
-      // Caso não tenha histórico algum, usa São Paulo como ponto inicial padrão
-      lat = -23.5505 + (Math.random() - 0.5) * 0.02;
-      lng = -46.6333 + (Math.random() - 0.5) * 0.02;
+      // Coordenadas padrão baseadas exatamente na região correta que aparece no seu mapa (-23.5800, -46.6800)
+      lat = -23.5800; 
+      lng = -46.6800; 
     }
 
     simulacoesAtivas[placaMaiuscula] = setInterval(async () => {
-      lat += (Math.random() - 0.5) * 0.002;
-      lng += (Math.random() - 0.5) * 0.002;
-      const velocidadeSimulada = Math.floor(Math.random() * 40) + 50; 
+      lat += (Math.random() - 0.5) * 0.001; 
+      lng += (Math.random() - 0.5) * 0.001;
+      const velocidadeSimulada = Math.floor(Math.random() * 30) + 30; 
       const horario = new Date().toISOString();
-      const rua = "Av. Paulista, 1000"; 
-      const bairro = "Bela Vista";
+      const rua = "Rua do seu Endereço"; 
+      const bairro = "Seu Bairro";
       const cidade = "São Paulo";
 
       try {
@@ -457,8 +455,8 @@ io.on('connection', (socket) => {
     if (!placa) return;
 
     const placaMaiuscula = placa.toUpperCase();
-    const rua = "Av. Paulista, 1000"; 
-    const bairro = "Bela Vista";
+    const rua = "Rua do seu Endereço"; 
+    const bairro = "Seu Bairro";
     const cidade = "São Paulo";
 
     try {

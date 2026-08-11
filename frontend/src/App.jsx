@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'; // ADICIONADO: useMap
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Wrench, LogOut } from 'lucide-react';
@@ -437,6 +437,28 @@ export default function App() {
     }
   };
 
+  // ==============================================================================
+  // NOVA FUNÇÃO: Resetar a posição do veículo
+  // ==============================================================================
+  const resetarPosicao = async (placaVeiculo) => {
+    if (!window.confirm("Deseja trazer o veículo de volta para o ponto de partida (São Paulo)?")) return;
+    try {
+      const res = await fetch(`${API_URL}/api/simular/resetar/${placaVeiculo}`, { method: 'DELETE' });
+      const data = await res.json();
+      alert(data.mensagem);
+      
+      // Limpa a posição do mapa na tela para ele voltar ao centro
+      setPosicoesAoVivo(prev => {
+        const novoEstado = { ...prev };
+        delete novoEstado[placaVeiculo];
+        return novoEstado;
+      });
+    } catch (err) {
+      alert("Erro ao resetar posição.");
+    }
+  };
+  // ==============================================================================
+
   const iniciarRastreamentoReal = (placaVeiculo) => {
     if (!navigator.geolocation) {
       alert("O seu navegador não suporta geolocalização.");
@@ -839,6 +861,7 @@ export default function App() {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button onClick={() => simularMovimento(v.placa)} style={{ background: '#475569', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>Testar Simulação</button>
                       <button onClick={() => iniciarRastreamentoReal(v.placa)} style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>📍 Usar Meu GPS Real</button>
+                      <button onClick={() => resetarPosicao(v.placa)} style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>🔄 Resetar</button>
                     </div>
                   </div>
                 ))
@@ -849,11 +872,9 @@ export default function App() {
                 center={[-23.5505, -46.6333]} // Posição padrão de arranque
                 zoom={14} 
                 style={{ height: '100%', width: '100%' }}
-                // APAGADA a propriedade 'key' que estava a causar o piscar constante
               >
                 <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 
-                {/* ADICIONADO: Componente que atualiza a câmara suavemente quando chegam novos dados */}
                 {Object.values(posicoesAoVivo).length > 0 && (
                   <AutoCenter position={[parseFloat(Object.values(posicoesAoVivo)[0].latitude), parseFloat(Object.values(posicoesAoVivo)[0].longitude)]} />
                 )}

@@ -294,6 +294,29 @@ app.post('/api/simular/iniciar', async (req, res) => {
   res.json({ mensagem: `Simulação iniciada com sucesso para ${placaMaiuscula}` });
 });
 
+// ==============================================================================
+// Rota para resetar a posição do veículo e trazê-lo de volta à terra firme
+// ==============================================================================
+app.delete('/api/simular/resetar/:placa', async (req, res) => {
+  const { placa } = req.params;
+  const placaMaiuscula = placa.toUpperCase();
+  
+  // Para a simulação se ela estiver a correr
+  if (simulacoesAtivas[placaMaiuscula]) {
+    clearInterval(simulacoesAtivas[placaMaiuscula]);
+    delete simulacoesAtivas[placaMaiuscula];
+  }
+
+  try {
+    // Apaga o histórico de posições desse veículo
+    await pool.query('DELETE FROM posicoes WHERE placa = $1', [placaMaiuscula]);
+    res.json({ mensagem: 'Posição resetada! O veículo voltou ao ponto de partida.' });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+// ==============================================================================
+
 app.get('/api/itinerario/:placa', async (req, res) => {
   const { placa } = req.params;
   const { data } = req.query;

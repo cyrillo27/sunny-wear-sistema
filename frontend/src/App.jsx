@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Wrench, LogOut } from 'lucide-react';
+import { Truck, Users, Link as LinkIcon, ShieldAlert, MapPin, List, History, Navigation, Trash2, PlusCircle, FileDown, LayoutDashboard, Wrench, LogOut, Crosshair } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -18,19 +18,19 @@ const socket = io(API_URL);
 const COLORS = ['#0284c7', '#059669', '#7c3aed', '#dc2626', '#d97706', '#475569'];
 
 // ==========================================
-// NOVO COMPONENTE: Move o mapa suavemente
+// COMPONENTE: Move o mapa suavemente sob demanda
 // ==========================================
-function AutoCenter({ position }) {
+function AutoCenter({ position, shouldCenter, onCentered }) {
   const map = useMap();
   useEffect(() => {
-    if (position) {
-      // O flyTo move a câmara com uma animação suave em vez de "saltar"
-      map.flyTo(position, map.getZoom(), {
+    if (position && shouldCenter) {
+      map.flyTo(position, 16, {
         animate: true,
-        duration: 1.5 // Duração da animação em segundos
+        duration: 1.5
       });
+      if (onCentered) onCentered();
     }
-  }, [position, map]);
+  }, [position, shouldCenter, map, onCentered]);
   return null;
 }
 
@@ -83,6 +83,9 @@ export default function App() {
   const [dadosGraficoAlertas, setDadosGraficoAlertas] = useState([]);
   const [dadosGraficoTurnos, setDadosGraficoTurnos] = useState([]);
   const [posicoesAoVivo, setPosicoesAoVivo] = useState({});
+
+  // Controle para o botão de centralizar o mapa no motorista
+  const [deveCentralizar, setDeveCentralizar] = useState(true);
 
   const handleNomeChange = (e) => {
     const apenasLetras = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, '');
@@ -420,6 +423,7 @@ export default function App() {
   };
 
   const simularMovimento = async (placaVeiculo) => {
+    setDeveCentralizar(true);
     try {
       const res = await fetch(`${API_URL}/api/simular/iniciar`, {
         method: 'POST',
@@ -437,9 +441,6 @@ export default function App() {
     }
   };
 
-  // ==============================================================================
-  // NOVA FUNÇÃO: Resetar a posição do veículo
-  // ==============================================================================
   const resetarPosicao = async (placaVeiculo) => {
     if (!window.confirm("Deseja trazer o veículo de volta para o ponto de partida (São Paulo)?")) return;
     try {
@@ -447,7 +448,6 @@ export default function App() {
       const data = await res.json();
       alert(data.mensagem);
       
-      // Limpa a posição do mapa na tela para ele voltar ao centro
       setPosicoesAoVivo(prev => {
         const novoEstado = { ...prev };
         delete novoEstado[placaVeiculo];
@@ -457,9 +457,9 @@ export default function App() {
       alert("Erro ao resetar posição.");
     }
   };
-  // ==============================================================================
 
   const iniciarRastreamentoReal = (placaVeiculo) => {
+    setDeveCentralizar(true);
     if (!navigator.geolocation) {
       alert("O seu navegador não suporta geolocalização.");
       return;
@@ -852,7 +852,18 @@ export default function App() {
 
         {aba === 'aovivo' && (
           <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '100%', boxSizing: 'border-box' }}>
-            <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}><MapPin size={18} color="#0284c7" /> Monitoramento ao Vivo</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', margin: 0 }}><MapPin size={18} color="#0284c7" /> Monitoramento ao Vivo</h2>
+              
+              {/* BOTÃO LOCALIZAR O MOTORISTA */}
+              <button 
+                onClick={() => setDeveCentralizar(true)} 
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#0284c7', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
+              >
+                <Crosshair size={16} /> Localizar o Motorista
+              </button>
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', width: '100%' }}>
               {veiculosList.length === 0 ? <p style={{ color: '#94a3b8', fontSize: '14px' }}>Cadastre veículos primeiro.</p> : (
                 veiculosList.map(v => (
@@ -867,16 +878,21 @@ export default function App() {
                 ))
               )}
             </div>
+
             <div style={{ height: '500px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
               <MapContainer 
-                center={[-23.5505, -46.6333]} // Posição padrão de arranque
+                center={[-23.5505, -46.6333]} 
                 zoom={14} 
                 style={{ height: '100%', width: '100%' }}
               >
                 <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 
                 {Object.values(posicoesAoVivo).length > 0 && (
-                  <AutoCenter position={[parseFloat(Object.values(posicoesAoVivo)[0].latitude), parseFloat(Object.values(posicoesAoVivo)[0].longitude)]} />
+                  <AutoCenter 
+                    position={[parseFloat(Object.values(posicoesAoVivo)[0].latitude), parseFloat(Object.values(posicoesAoVivo)[0].longitude)]} 
+                    shouldCenter={deveCentralizar}
+                    onCentered={() => setDeveCentralizar(false)}
+                  />
                 )}
 
                 {Object.values(posicoesAoVivo).map((p, idx) => (

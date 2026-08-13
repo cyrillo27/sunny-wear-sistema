@@ -17,9 +17,6 @@ const API_URL = 'https://sunny-wear-sistema.onrender.com';
 const socket = io(API_URL);
 const COLORS = ['#0284c7', '#059669', '#7c3aed', '#dc2626', '#d97706', '#475569'];
 
-// ==========================================
-// COMPONENTE: Move o mapa suavemente sob demanda
-// ==========================================
 function AutoCenter({ position, shouldCenter, onCentered }) {
   const map = useMap();
   useEffect(() => {
@@ -84,7 +81,6 @@ export default function App() {
   const [dadosGraficoTurnos, setDadosGraficoTurnos] = useState([]);
   const [posicoesAoVivo, setPosicoesAoVivo] = useState({});
 
-  // Controle para o botão de centralizar o mapa no motorista
   const [deveCentralizar, setDeveCentralizar] = useState(true);
 
   const handleNomeChange = (e) => {
@@ -420,78 +416,6 @@ export default function App() {
     } catch (e) {
       alert("Erro ao buscar itinerário.");
     }
-  };
-
-  const simularMovimento = async (placaVeiculo) => {
-    setDeveCentralizar(true);
-    try {
-      const res = await fetch(`${API_URL}/api/simular/iniciar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ placa: placaVeiculo })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert(data.mensagem);
-      } else {
-        alert(data.erro || "Erro ao iniciar simulação.");
-      }
-    } catch (err) {
-      console.error("Erro de conexão ao simular:", err);
-    }
-  };
-
-  const resetarPosicao = async (placaVeiculo) => {
-    if (!window.confirm("Deseja trazer o veículo de volta para o ponto de partida (São Paulo)?")) return;
-    try {
-      const res = await fetch(`${API_URL}/api/simular/resetar/${placaVeiculo}`, { method: 'DELETE' });
-      const data = await res.json();
-      alert(data.mensagem);
-      
-      setPosicoesAoVivo(prev => {
-        const novoEstado = { ...prev };
-        delete novoEstado[placaVeiculo];
-        return novoEstado;
-      });
-    } catch (err) {
-      alert("Erro ao resetar posição.");
-    }
-  };
-
-  const iniciarRastreamentoReal = (placaVeiculo) => {
-    setDeveCentralizar(true);
-    if (!navigator.geolocation) {
-      alert("O seu navegador não suporta geolocalização.");
-      return;
-    }
-
-    alert(`Rastreamento REAL iniciado para o veículo ${placaVeiculo}! Caminhe com o dispositivo para ver o mapa a atualizar.`);
-
-    navigator.geolocation.watchPosition(
-      (posicao) => {
-        const lat = posicao.coords.latitude;
-        const lng = posicao.coords.longitude;
-        const velocidade = posicao.coords.speed ? Math.round(posicao.coords.speed * 3.6) : 0; 
-        const horario = new Date().toISOString();
-
-        socket.emit('atualizar_localizacao', {
-          placa: placaVeiculo, 
-          latitude: lat, 
-          longitude: lng, 
-          velocidade: velocidade, 
-          horario: horario
-        });
-      },
-      (erro) => {
-        console.error("Erro ao apanhar a localização real:", erro);
-        alert("Ative o GPS do celular/dispositivo e dê permissão de localização ao navegador.");
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 5000
-      }
-    );
   };
 
   const getTabStyle = (nomeAba) => ({
@@ -852,10 +776,9 @@ export default function App() {
 
         {aba === 'aovivo' && (
           <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '100%', boxSizing: 'border-box' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-              <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', margin: 0 }}><MapPin size={18} color="#0284c7" /> Monitoramento ao Vivo</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: '600', margin: 0 }}><MapPin size={18} color="#0284c7" /> Monitoramento ao Vivo dos Veículos</h2>
               
-              {/* BOTÃO LOCALIZAR O MOTORISTA */}
               <button 
                 onClick={() => setDeveCentralizar(true)} 
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#0284c7', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}
@@ -869,11 +792,9 @@ export default function App() {
                 veiculosList.map(v => (
                   <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', borderRadius: '6px', border: '1px solid #e2e8f0', gap: '8px', flexWrap: 'wrap' }}>
                     <span><strong>{v.modelo}</strong> (<code>{v.placa}</code>)</span>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={() => simularMovimento(v.placa)} style={{ background: '#475569', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>Testar Simulação</button>
-                      <button onClick={() => iniciarRastreamentoReal(v.placa)} style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>📍 Usar Meu GPS Real</button>
-                      <button onClick={() => resetarPosicao(v.placa)} style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>🔄 Resetar</button>
-                    </div>
+                    <span style={{ fontSize: '13px', color: posicoesAoVivo[v.placa] ? '#16a34a' : '#64748b', fontWeight: '600' }}>
+                      {posicoesAoVivo[v.placa] ? '🟢 Em movimento / Online' : '⚪ Aguardando App do Motorista'}
+                    </span>
                   </div>
                 ))
               )}

@@ -17,6 +17,18 @@ const API_URL = 'https://sunny-wear-sistema.onrender.com';
 const socket = io(API_URL);
 const COLORS = ['#0284c7', '#059669', '#7c3aed', '#dc2626', '#d97706', '#475569'];
 
+// Estilo de correção para garantir que os tiles do mapa carreguem sem ficar presos no fundo azul
+const leafletFixStyles = `
+  .leaflet-container {
+    width: 100%;
+    height: 100%;
+    background-color: #aad3df !important;
+  }
+  .leaflet-tile-container img {
+    visibility: visible !important;
+  }
+`;
+
 function AutoCenter({ position, shouldCenter, onCentered }) {
   const map = useMap();
   useEffect(() => {
@@ -450,6 +462,7 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif', padding: '20px', background: '#f1f5f9', minHeight: '100vh', width: '100%', maxWidth: '1440px', margin: '0 auto', color: '#1e293b', boxSizing: 'border-box' }}>
+      <style>{leafletFixStyles}</style>
       <header style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '20px 24px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

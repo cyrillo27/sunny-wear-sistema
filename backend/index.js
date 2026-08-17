@@ -237,7 +237,6 @@ app.post('/api/simular/iniciar', async (req, res) => {
     clearInterval(simulacoesAtivas[placaMaiuscula]);
   }
 
-  // Busca a última posição salva do veículo no banco, senão assume o centro de SP
   let lat = -23.5505;
   let lng = -46.6333;
 
@@ -294,28 +293,22 @@ app.post('/api/simular/iniciar', async (req, res) => {
   res.json({ mensagem: `Simulação iniciada com sucesso para ${placaMaiuscula}` });
 });
 
-// ==============================================================================
-// Rota para resetar a posição do veículo e trazê-lo de volta à terra firme
-// ==============================================================================
 app.delete('/api/simular/resetar/:placa', async (req, res) => {
   const { placa } = req.params;
   const placaMaiuscula = placa.toUpperCase();
   
-  // Para a simulação se ela estiver a correr
   if (simulacoesAtivas[placaMaiuscula]) {
     clearInterval(simulacoesAtivas[placaMaiuscula]);
     delete simulacoesAtivas[placaMaiuscula];
   }
 
   try {
-    // Apaga o histórico de posições desse veículo
     await pool.query('DELETE FROM posicoes WHERE placa = $1', [placaMaiuscula]);
     res.json({ mensagem: 'Posição resetada! O veículo voltou ao ponto de partida.' });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
 });
-// ==============================================================================
 
 app.get('/api/itinerario/:placa', async (req, res) => {
   const { placa } = req.params;
@@ -375,9 +368,15 @@ app.get('/api/dashboard/stats', async (req, res) => {
   } catch (err) { res.status(500).json({ erro: err.message }); }
 });
 
+// Rota corrigida para exibir apenas os alertas dos veículos atualmente cadastrados
 app.get('/api/dashboard/grafico-alertas', async (req, res) => {
   try {
-    const query = `SELECT placa, CAST(COUNT(*) AS INTEGER) as total FROM alertas GROUP BY placa`;
+    const query = `
+      SELECT a.placa, CAST(COUNT(a.id) AS INTEGER) as total 
+      FROM alertas a
+      JOIN veiculos v ON UPPER(a.placa) = UPPER(v.placa)
+      GROUP BY a.placa
+    `;
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ erro: err.message }); }
